@@ -69,25 +69,15 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap');
 
 html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background-color: #f0f4ff; }
-#MainMenu, footer, header { visibility: hidden; }
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header { visibility: hidden; }
 .block-container { padding: 0 !important; max-width: 100% !important; }
 .stApp { background: #f0f4ff; min-height: 100vh; }
 
 /* ── Sidebar ── */
 /* Always show the sidebar toggle arrow */
 
-[data-testid="collapsedControl"] {
-    display: flex !important;
-    visibility: visible !important;
-    pointer-events: all !important;
-    cursor: pointer !important;
-    z-index: 99999 !important;
-}
-
-[data-testid="collapsedControl"]:hover {
-    background: #e8f0ff !important;
-    box-shadow: 3px 3px 12px rgba(13,43,110,0.3) !important;
-}
 
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0d2b6e 0%, #163580 40%, #1a3d8f 100%) !important;
@@ -638,6 +628,7 @@ if not st.session_state.onboarding_done:
 
 # ── SIDEBAR ───────────────────────────────────────────────────
 with st.sidebar:
+    st.write("👋 sidebar is open")  # temporary
     st.markdown("""
     <div class="sidebar-logo">
         <span class="logo-icon">🏥</span>
