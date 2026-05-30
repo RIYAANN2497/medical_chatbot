@@ -1093,15 +1093,18 @@ with main_col:
 
                     # Body — parse draft from agent result
                     draft_body = st.session_state.agent_result
-                    # Strip the "Draft Email Ready" header if present
-                    if "---" in draft_body:
-                        parts = draft_body.split("---")
-                        # Find the first non-empty part after splitting
-                        for part in parts:
-                            stripped = part.strip()
-                            if stripped and not stripped.startswith("_To send"):
-                                draft_body = stripped
-                                break
+                    lines = draft_body.split("\n")
+                    body_lines = []
+                    skip_prefixes = ("**📧", "**to:", "**subject:", "---", "_to send")
+                    found_body = False
+                    for line in lines:
+                        if line.strip().lower().startswith(skip_prefixes):
+                            continue
+                        if line.strip():
+                            found_body = True
+                        if found_body:
+                            body_lines.append(line)
+                    draft_body = "\n".join(body_lines).strip()
 
                     st.markdown("""
                     <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
