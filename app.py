@@ -435,6 +435,7 @@ header { visibility: hidden; }
 
 # ── Session state defaults ────────────────────────────────────
 defaults = {
+    "run_all_triggered": False,
     "agent_statuses": {},
     "all_agents_results": {},
     "llm": None,
@@ -923,9 +924,11 @@ with main_col:
             "📧 Email Report":         ("📧", "#c72563"),
         }
         status_style = {
-            "done":    ("✅ Done",     "#2eaa5e", "#edfdf4"),
-            "running": ("⏳ Running…", "#d97b4a", "#fff8f0"),
-            "":        ("— Not run",  "#aab8d4", "#f5f7ff"),
+            "done":    ("✅ Done",      "#2eaa5e", "#edfdf4"),
+            "running": ("⏳ Running…",  "#d97b4a", "#fff8f0"),
+            "pending": ("🕐 Pending…",  "#4a90d9", "#f0f4ff"),
+            "waiting": ("⏸ Waiting…",  "#c72563", "#fff0f5"),
+            "":        ("— Not run",   "#aab8d4", "#f5f7ff"),
         }
 
         # ── No documents yet ─────────────────────────────────
@@ -1013,10 +1016,25 @@ with main_col:
             col_l, col_btn, col_r = st.columns([2, 2, 2])
             with col_btn:
                 if st.button("⚡ Run All Agents", use_container_width=True, key="run_all"):
+                    st.session_state.run_all_triggered = True
                     for aname in orchestrator.agent_names:
+                        st.session_state.agent_statuses[aname] = "pending"
+                    st.rerun()
+
+            if st.session_state.get("run_all_triggered"):
+                email_agent = "📧 Email Report"
+                for aname in orchestrator.agent_names:
+                    status = st.session_state.agent_statuses.get(aname, "")
+                    if status == "pending":
+                        # Email agent needs SMTP config
+                        if aname == email_agent:
+                            has_smtp = st.session_state.get("smtp_config") and st.session_state.get("recipient_email")
+                            if not has_smtp:
+                                st.session_state.agent_statuses[aname] = "waiting"
+                                st.warning("📧 Email agent is waiting — please fill in SMTP settings in the sidebar.")
+                                break
                         st.session_state.agent_statuses[aname] = "running"
-                    with st.spinner("Running all agents — this may take a minute…"):
-                        for aname in orchestrator.agent_names:
+                        with st.spinner(f"⏳ Running {aname}..."):
                             try:
                                 res = orchestrator.run(
                                     agent_name=aname,
@@ -1035,7 +1053,33 @@ with main_col:
                             except Exception as e:
                                 st.session_state.all_agents_results[aname] = f"❌ Error: {e}"
                                 st.session_state.agent_statuses[aname] = "done"
-                    st.rerun()
+                        st.rerun()
+
+                # Check if email agent is waiting and now has config
+                if st.session_state.agent_statuses.get(email_agent) == "waiting":
+                    has_smtp = st.session_state.get("smtp_config") and st.session_state.get("recipient_email")
+                    if has_smtp:
+                        st.session_state.agent_statuses[email_agent] = "pending"
+                        st.rerun()
+                    else:
+                        st.markdown("""
+                        <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(74,144,217,0.3);
+                            border-radius:14px;padding:16px 20px;margin:12px 0;text-align:center;">
+                            <div style="font-size:24px;margin-bottom:8px;">📧</div>
+                            <div style="color:#0d2b6e;font-weight:700;font-size:14px;">Email Agent is waiting</div>
+                            <div style="color:#5a7abf;font-size:12px;margin-top:4px;">
+                                Fill in your Gmail and recipient email in the sidebar to continue
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # All done
+                all_done = all(
+                    st.session_state.agent_statuses.get(a) in ("done", "waiting")
+                    for a in orchestrator.agent_names
+                )
+                if all_done and st.session_state.agent_statuses.get(email_agent) != "waiting":
+                    st.session_state.run_all_triggered = False
 
             # ── If Run All results exist, show in tabs ────────
             if st.session_state.all_agents_results:
