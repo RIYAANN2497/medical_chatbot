@@ -93,25 +93,42 @@ header { visibility: hidden; }
     -webkit-text-fill-color: #0d2b6e !important;
 }
 [data-testid="stFileUploader"] {
-    background: rgba(10,30,80,0.5) !important;
-    border: 2px dashed rgba(74,144,217,0.5) !important;
-    border-radius: 16px !important; padding: 12px !important;
+    background: transparent !important;
+    border: 2px dashed #2451b3 !important;
+    border-radius: 16px !important;
+    padding: 8px !important;
+    text-align: center !important;
 }
 [data-testid="stFileUploader"]:hover {
-    border-color: rgba(74,144,217,0.8) !important;
-    background: rgba(10,30,80,0.6) !important;
+    border-color: #4a90d9 !important;
 }
-[data-testid="stFileUploader"] *:not(button) {
-    color: ##0d2b6e !important;
-    -webkit-text-fill-color: ##0d2b6e !important;
+[data-testid="stFileUploader"] * {
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
+}
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] span[class*="instructions"] {
+    display: none !important;
 }
 [data-testid="stFileUploader"] button {
-    background: rgba(74,144,217,0.3) !important;
-    border: 1px solid rgba(74,144,217,0.6) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important; font-size: 12px !important;
+    background: transparent !important;
+    border: 2px solid #0d2b6e !important;
+    border-radius: 50% !important;
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+}
+[data-testid="stFileUploader"] button * {
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
 }
 [data-testid="stSidebar"] .stMarkdown p,
 [data-testid="stSidebar"] .stMarkdown li { color: #9ab4e0 !important; font-size: 13px; line-height: 1.7; }
