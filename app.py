@@ -77,6 +77,7 @@ header { visibility: hidden; }
 
 /* ── Sidebar ── */
 [data-testid="collapsedControl"] { display: none !important; }
+[data-testid="stSidebarCollapseButton"] { display: none !important; }
 
 [data-testid="stSidebar"] {
     background: linear-gradient(160deg, #0a1f5c 0%, #112272 50%, #1a3d8f 100%) !important;
@@ -675,12 +676,14 @@ if not st.session_state.onboarding_done:
 
 # ── SIDEBAR ───────────────────────────────────────────────────
 with st.sidebar:
-    st.write("👋 sidebar is open")  # temporary
     st.markdown("""
-    <div class="sidebar-logo">
-        <span class="logo-icon">🏥</span>
-        <div class="logo-title">MediChat</div>
-        <div class="logo-subtitle">AI Medical Assistant</div>
+    <div style="text-align:center; padding:28px 16px 20px; margin:-16px -16px 20px;
+        background:rgba(0,0,0,0.2); border-bottom:1px solid rgba(255,255,255,0.07);">
+        <div style="font-size:42px; margin-bottom:8px;">🏥</div>
+        <div style="font-family:'Playfair Display',serif; font-size:22px;
+            font-weight:700; color:#fff; letter-spacing:0.5px;">MediChat</div>
+        <div style="font-size:10px; color:#5a8fd4; letter-spacing:2.5px;
+            text-transform:uppercase; margin-top:4px;">AI Medical Assistant</div>
     </div>
     """, unsafe_allow_html=True)
 
