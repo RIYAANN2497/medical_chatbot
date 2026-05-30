@@ -54,7 +54,7 @@ st.set_page_config(
     page_title="MediChat — Your Medical Assistant",
     page_icon="🏥",
     layout="wide",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="expanded",
 )
 
 st._config.set_option('theme.base', 'light')
@@ -79,20 +79,9 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background-color
 [data-testid="collapsedControl"] {
     display: flex !important;
     visibility: visible !important;
-    opacity: 1 !important;
     pointer-events: all !important;
-    z-index: 99999 !important;
-    left: 0 !important;
-    top: 130px !important;
-    position: fixed !important;
-    background: white !important;
-    border-radius: 0 8px 8px 0 !important;
-    box-shadow: 2px 2px 8px rgba(13,43,110,0.2) !important;
-    width: 36px !important;
-    height: 52px !important;
     cursor: pointer !important;
-    align-items: center !important;
-    justify-content: center !important;
+    z-index: 99999 !important;
 }
 
 [data-testid="collapsedControl"]:hover {
