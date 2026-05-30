@@ -677,6 +677,113 @@ if st.session_state.get("processing_error"):
         st.rerun()
 
 if st.session_state.get("processing"):
+    st.markdown("""
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bar {
+        0%   { width: 0%; }
+        100% { width: 100%; }
+    }
+    .processing-overlay {
+        position: fixed; top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(240, 244, 255, 0.97);
+        backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        animation: fadeIn 0.4s ease;
+    }
+    .processing-card {
+        background: white;
+        border-radius: 28px;
+        padding: 48px 56px;
+        text-align: center;
+        box-shadow: 0 24px 64px rgba(13,43,110,0.15);
+        border: 1px solid rgba(74,144,217,0.2);
+        max-width: 460px;
+        width: 90%;
+    }
+    .spinner-ring {
+        width: 72px; height: 72px;
+        border: 5px solid #e8eeff;
+        border-top: 5px solid #2451b3;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 24px;
+    }
+    .processing-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 26px; font-weight: 700;
+        color: #0d2b6e; margin-bottom: 8px;
+    }
+    .processing-sub {
+        font-size: 14px; color: #5a7abf;
+        margin-bottom: 28px; line-height: 1.6;
+    }
+    .progress-bar-wrap {
+        background: #e8eeff;
+        border-radius: 20px;
+        height: 6px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .progress-bar-fill {
+        height: 6px;
+        background: linear-gradient(90deg, #4a90d9, #2451b3);
+        border-radius: 20px;
+        animation: bar 3s ease-in-out infinite alternate;
+    }
+    .processing-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        text-align: left;
+    }
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #5a7abf;
+        font-family: 'Nunito', sans-serif;
+    }
+    .step-dot {
+        width: 8px; height: 8px;
+        background: #4a90d9;
+        border-radius: 50%;
+        flex-shrink: 0;
+        animation: pulse 1.5s infinite;
+    }
+    </style>
+
+    <div class="processing-overlay">
+        <div class="processing-card">
+            <div class="spinner-ring"></div>
+            <div class="processing-title">Analysing your documents</div>
+            <div class="processing-sub">
+                Please wait while we read, extract,<br>and index all your medical content.
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill"></div>
+            </div>
+            <div class="processing-steps">
+                <div class="step-item"><div class="step-dot"></div>Reading file contents</div>
+                <div class="step-item"><div class="step-dot"></div>Extracting text and lab values</div>
+                <div class="step-item"><div class="step-dot"></div>Building searchable index</div>
+                <div class="step-item"><div class="step-dot"></div>Generating document summary</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     tmp_paths, original_names = [], []
     for file_info in st.session_state.get("files_to_process", []):
         suffix = Path(file_info["name"]).suffix
