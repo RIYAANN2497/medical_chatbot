@@ -80,6 +80,7 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background-color
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    pointer-events: all !important;
     z-index: 99999 !important;
     left: 0 !important;
     top: 130px !important;
@@ -87,8 +88,16 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background-color
     background: white !important;
     border-radius: 0 8px 8px 0 !important;
     box-shadow: 2px 2px 8px rgba(13,43,110,0.2) !important;
-    width: 24px !important;
-    height: 48px !important;
+    width: 36px !important;
+    height: 52px !important;
+    cursor: pointer !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+[data-testid="collapsedControl"]:hover {
+    background: #e8f0ff !important;
+    box-shadow: 3px 3px 12px rgba(13,43,110,0.3) !important;
 }
 
 [data-testid="stSidebar"] {
