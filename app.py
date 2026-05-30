@@ -89,8 +89,25 @@ header { visibility: hidden; }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 [data-testid="stSidebar"] * { color: #dce8ff !important; }
 [data-testid="stFileUploader"] *:not(button) {
-    color: #ffffff !important; opacity: 1 !important;
+    color: #0d2b6e !important; opacity: 1 !important;
+    -webkit-text-fill-color: #0d2b6e !important;
+}
+[data-testid="stFileUploader"] {
+    background: #ffffff !important;
+    border: 2px dashed #2451b3 !important;
+    border-radius: 16px !important; padding: 12px !important;
+}
+[data-testid="stFileUploader"]:hover {
+    border-color: #4a90d9 !important;
+    background: #f0f4ff !important;
+}
+[data-testid="stFileUploader"] button {
+    background: #2451b3 !important;
+    border: none !important;
+    color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important; font-size: 12px !important;
 }
 [data-testid="stSidebar"] .stMarkdown p,
 [data-testid="stSidebar"] .stMarkdown li { color: #9ab4e0 !important; font-size: 13px; line-height: 1.7; }
@@ -664,9 +681,17 @@ with st.sidebar:
     )
 
     if uploaded_files:
-        st.markdown(f"<p style='font-size:13px; color:#8aaee0; margin:8px 0 4px;'>📎 {len(uploaded_files)} file(s) ready</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:12px;font-weight:700;color:#ffffff;background:rgba(74,144,217,0.3);padding:6px 12px;border-radius:20px;display:inline-block;margin:8px 0 4px;'>📎 {len(uploaded_files)} file(s) selected</p>", unsafe_allow_html=True)
         for f in uploaded_files:
-            st.markdown(f'<div class="doc-pill">📄 {html.escape(f.name)}</div>', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div style="background:#ffffff;border:1px solid #2451b3;border-radius:12px;
+                padding:10px 14px;margin:6px 0;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:18px;">📄</span>
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;">{html.escape(f.name)}</div>
+                    <div style="font-size:11px;color:#4a6aaa;">Ready to process</div>
+                </div>
+            </div>''', unsafe_allow_html=True)
 
     if uploaded_files and st.button("✨  Process All Documents"):
         st.session_state.processing = True
@@ -677,7 +702,15 @@ with st.sidebar:
         st.markdown("---")
         st.markdown('<p style="font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#4a6aaa;margin:0 0 8px;display:block;">✅ Loaded Documents</p>', unsafe_allow_html=True)
         for name in st.session_state.uploaded_names:
-            st.markdown(f'<div class="doc-pill">✅ {html.escape(name)}</div>', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div style="background:#ffffff;border:1px solid #2eaa5e;border-radius:12px;
+                padding:10px 14px;margin:6px 0;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:18px;">✅</span>
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;">{html.escape(name)}</div>
+                    <div style="font-size:11px;color:#2eaa5e;">Processed &amp; ready</div>
+                </div>
+            </div>''', unsafe_allow_html=True)
 
     # ── Email SMTP config (when email agent active) ───────────
     if st.session_state.active_agent == "📧 Email Report":
