@@ -1096,7 +1096,12 @@ with main_col:
                     # Strip the "Draft Email Ready" header if present
                     if "---" in draft_body:
                         parts = draft_body.split("---")
-                        draft_body = parts[1].strip() if len(parts) > 1 else draft_body
+                        # Find the first non-empty part after splitting
+                        for part in parts:
+                            stripped = part.strip()
+                            if stripped and not stripped.startswith("_To send"):
+                                draft_body = stripped
+                                break
 
                     st.markdown("""
                     <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
