@@ -655,7 +655,7 @@ with st.sidebar:
         """, unsafe_allow_html=True)
 
     # ── Always-visible document upload ───────────────────────
-    st.markdown('<p class="sidebar-section-label">Upload Documents</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#4a6aaa;margin:0 0 8px;display:block;">📂 Upload Documents</p>', unsafe_allow_html=True)
     uploaded_files = st.file_uploader(
         "Drop your files here",
         type=["pdf", "jpg", "jpeg", "png", "webp", "docx", "txt"],
@@ -675,7 +675,7 @@ with st.sidebar:
 
     if st.session_state.uploaded_names:
         st.markdown("---")
-        st.markdown('<p class="sidebar-section-label">Loaded Documents</p>', unsafe_allow_html=True)
+        st.markdown('<p style="font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#4a6aaa;margin:0 0 8px;display:block;">✅ Loaded Documents</p>', unsafe_allow_html=True)
         for name in st.session_state.uploaded_names:
             st.markdown(f'<div class="doc-pill">✅ {html.escape(name)}</div>', unsafe_allow_html=True)
 
