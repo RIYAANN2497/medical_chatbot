@@ -696,7 +696,7 @@ with st.sidebar:
     )
 
     if uploaded_files:
-f       or f in uploaded_files:
+        for f in uploaded_files:
             already_done = f.name in st.session_state.uploaded_names
             status_icon = "✅" if already_done else "📄"
             status_text = "Processed & ready" if already_done else "Ready to process"
