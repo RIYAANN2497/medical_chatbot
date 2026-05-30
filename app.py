@@ -696,36 +696,30 @@ with st.sidebar:
     )
 
     if uploaded_files:
-        st.markdown(f"<p style='font-size:12px;font-weight:700;color:#ffffff;background:rgba(74,144,217,0.3);padding:6px 12px;border-radius:20px;display:inline-block;margin:8px 0 4px;'>📎 {len(uploaded_files)} file(s) selected</p>", unsafe_allow_html=True)
-        for f in uploaded_files:
+f       or f in uploaded_files:
+            already_done = f.name in st.session_state.uploaded_names
+            status_icon = "✅" if already_done else "📄"
+            status_text = "Processed & ready" if already_done else "Ready to process"
+            status_color = "#1a8a4a" if already_done else "#2451b3"
             st.markdown(f'''
-            <div style="background:#ffffff;border:1px solid #2451b3;border-radius:12px;
-                padding:10px 14px;margin:6px 0;display:flex;align-items:center;gap:10px;">
-                <span style="font-size:18px;">📄</span>
+            <div style="background:#ffffff;border:1px solid {'#2eaa5e' if already_done else '#2451b3'};
+                border-radius:12px;padding:10px 14px;margin:6px 0;
+                display:flex;align-items:center;gap:10px;">
+                <span style="font-size:18px;">{status_icon}</span>
                 <div>
                     <div style="font-size:13px;font-weight:700;color:#0d2b6e;-webkit-text-fill-color:#0d2b6e;">{html.escape(f.name)}</div>
-                    <div style="font-size:11px;color:#2451b3;font-weight:600;-webkit-text-fill-color:#2451b3;">Ready to process</div>
+                    <div style="font-size:11px;font-weight:600;color:{status_color};-webkit-text-fill-color:{status_color};">{status_text}</div>
                 </div>
             </div>''', unsafe_allow_html=True)
 
-    if uploaded_files and st.button("✨  Process All Documents"):
-        st.session_state.processing = True
-        st.session_state.files_to_process = [{"name": f.name, "data": f.read()} for f in uploaded_files]
-        st.rerun()
+    if uploaded_files:
+        col_l, col_btn, col_r = st.columns([1, 4, 1])
+        with col_btn:
+            if st.button("✨ Process All Documents", use_container_width=True):
+                st.session_state.processing = True
+                st.session_state.files_to_process = [{"name": f.name, "data": f.read()} for f in uploaded_files]
+                st.rerun()
 
-    if st.session_state.uploaded_names:
-        st.markdown("---")
-        st.markdown('<p style="font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#4a6aaa;margin:0 0 8px;display:block;">✅ Loaded Documents</p>', unsafe_allow_html=True)
-        for name in st.session_state.uploaded_names:
-            st.markdown(f'''
-            <div style="background:#ffffff;border:1px solid #2eaa5e;border-radius:12px;
-                padding:10px 14px;margin:6px 0;display:flex;align-items:center;gap:10px;">
-                <span style="font-size:18px;">✅</span>
-                <div>
-                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;-webkit-text-fill-color:#0d2b6e;">{html.escape(name)}</div>
-                    <div style="font-size:11px;color:#1a8a4a;font-weight:600;-webkit-text-fill-color:#1a8a4a;">✓ Processed &amp; ready</div>
-                </div>
-            </div>''', unsafe_allow_html=True)
 
     # ── Email SMTP config (when email agent active) ───────────
     if st.session_state.active_agent == "📧 Email Report":
