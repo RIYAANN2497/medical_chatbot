@@ -936,7 +936,6 @@ with main_col:
         }
 
         # ── No documents yet ─────────────────────────────────
-        st.write(f"DEBUG: retriever={st.session_state.retriever is not None}, active_agent={st.session_state.active_agent}, agent_result={st.session_state.agent_result}")
         if st.session_state.retriever is None:
             st.markdown("""
             <div style="text-align:center; margin:16px auto 32px; padding:40px 32px;
@@ -1214,6 +1213,7 @@ with main_col:
             with col_btn:
                 if st.button("⚡ Run All Agents", use_container_width=True, key="run_all"):
                     st.session_state.run_all_triggered = True
+                    st.session_state.all_agents_results = {}
                     for aname in orchestrator.agent_names:
                         st.session_state.agent_statuses[aname] = "pending"
                     st.rerun()
@@ -1254,7 +1254,7 @@ with main_col:
                     st.session_state.agent_statuses.get(a) in ("done", "waiting")
                     for a in orchestrator.agent_names
                 )
-                if all_done and st.session_state.agent_statuses.get(email_agent) != "waiting":
+                if all_done:
                     st.session_state.run_all_triggered = False
 
             # ── If Run All results exist, show in tabs ────────
