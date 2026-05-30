@@ -688,8 +688,8 @@ with st.sidebar:
                 padding:10px 14px;margin:6px 0;display:flex;align-items:center;gap:10px;">
                 <span style="font-size:18px;">📄</span>
                 <div>
-                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;">{html.escape(f.name)}</div>
-                    <div style="font-size:11px;color:#4a6aaa;">Ready to process</div>
+                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;-webkit-text-fill-color:#0d2b6e;">{html.escape(f.name)}</div>
+                    <div style="font-size:11px;color:#2451b3;font-weight:600;-webkit-text-fill-color:#2451b3;">Ready to process</div>
                 </div>
             </div>''', unsafe_allow_html=True)
 
@@ -707,8 +707,8 @@ with st.sidebar:
                 padding:10px 14px;margin:6px 0;display:flex;align-items:center;gap:10px;">
                 <span style="font-size:18px;">✅</span>
                 <div>
-                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;">{html.escape(name)}</div>
-                    <div style="font-size:11px;color:#2eaa5e;">Processed &amp; ready</div>
+                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;-webkit-text-fill-color:#0d2b6e;">{html.escape(name)}</div>
+                    <div style="font-size:11px;color:#1a8a4a;font-weight:600;-webkit-text-fill-color:#1a8a4a;">✓ Processed &amp; ready</div>
                 </div>
             </div>''', unsafe_allow_html=True)
 
