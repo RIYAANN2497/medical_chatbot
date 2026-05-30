@@ -76,103 +76,150 @@ header { visibility: hidden; }
 .stApp { background: #f0f4ff; min-height: 100vh; }
 
 /* ── Sidebar ── */
-/* Always show the sidebar toggle arrow */
-
+[data-testid="collapsedControl"] { display: none !important; }
 
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d2b6e 0%, #163580 40%, #1a3d8f 100%) !important;
+    background: linear-gradient(160deg, #0a1f5c 0%, #112272 50%, #1a3d8f 100%) !important;
     border-right: none !important;
-    box-shadow: 4px 0 24px rgba(13,43,110,0.18);
+    box-shadow: 6px 0 32px rgba(10,31,92,0.25);
+    min-width: 280px !important;
+    max-width: 280px !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    padding: 0 !important;
 }
 [data-testid="stSidebar"] * { color: #e8eeff !important; }
+
 [data-testid="stFileUploader"] *:not(button) {
-    color: #ffffff !important; opacity: 1 !important; -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important; opacity: 1 !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 [data-testid="stSidebar"] .stMarkdown p,
-[data-testid="stSidebar"] .stMarkdown li { color: #b8c8f0 !important; font-size: 14px; line-height: 1.7; }
+[data-testid="stSidebar"] .stMarkdown li {
+    color: #b8c8f0 !important; font-size: 13px; line-height: 1.7;
+}
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3 {
-    color: #ffffff !important; font-family: 'Playfair Display', serif !important;
-    font-size: 20px !important; letter-spacing: 0.3px;
+    color: #ffffff !important;
+    font-family: 'Playfair Display', serif !important;
+    font-size: 18px !important; letter-spacing: 0.3px;
 }
 
+/* Sidebar logo area */
 .sidebar-logo {
-    text-align: center; padding: 28px 16px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.12); margin-bottom: 20px;
+    text-align: center;
+    padding: 32px 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 24px;
+    background: rgba(0,0,0,0.15);
 }
 .sidebar-logo .logo-icon {
-    font-size: 48px; display: block; margin-bottom: 8px;
-    filter: drop-shadow(0 4px 12px rgba(100,160,255,0.4));
+    font-size: 44px; display: block; margin-bottom: 10px;
 }
 .sidebar-logo .logo-title {
-    font-family: 'Playfair Display', serif; font-size: 22px;
-    font-weight: 700; color: #ffffff !important; letter-spacing: 0.5px;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700;
+    color: #ffffff !important; letter-spacing: 0.5px;
 }
 .sidebar-logo .logo-subtitle {
-    font-size: 12px; color: #8aaee0 !important; margin-top: 2px;
-    letter-spacing: 1px; text-transform: uppercase;
+    font-size: 11px; color: #6a9ad4 !important;
+    margin-top: 3px; letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
+/* Section labels */
+.sidebar-section-label {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: #4a7abf !important; margin: 0 0 10px;
+    padding: 0 4px;
+}
+
+/* File uploader */
 [data-testid="stFileUploader"] {
-    background: rgba(255,255,255,0.07) !important;
-    border: 2px dashed rgba(255,255,255,0.25) !important;
-    border-radius: 16px !important; padding: 12px !important; transition: all 0.3s ease;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1.5px dashed rgba(255,255,255,0.15) !important;
+    border-radius: 14px !important;
+    padding: 10px !important;
+    transition: all 0.3s ease;
 }
 [data-testid="stFileUploader"]:hover {
-    border-color: rgba(100,160,255,0.6) !important;
-    background: rgba(255,255,255,0.12) !important;
+    border-color: rgba(100,160,255,0.4) !important;
+    background: rgba(255,255,255,0.08) !important;
 }
 [data-testid="stFileUploader"] button {
-    background: rgba(100,160,255,0.2) !important;
-    border: 1px solid rgba(100,160,255,0.4) !important;
+    background: rgba(100,160,255,0.15) !important;
+    border: 1px solid rgba(100,160,255,0.3) !important;
     color: #c8daff !important; border-radius: 10px !important;
-    font-family: 'Nunito', sans-serif !important;
-    font-weight: 600 !important; font-size: 13px !important;
+    font-weight: 600 !important; font-size: 12px !important;
 }
 
+/* Process button */
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
-    background: linear-gradient(135deg, #4a90d9 0%, #2563c7 100%) !important;
-    color: white !important; border: none !important; border-radius: 14px !important;
-    padding: 12px 20px !important; font-family: 'Nunito', sans-serif !important;
-    font-weight: 700 !important; font-size: 15px !important; letter-spacing: 0.3px;
-    box-shadow: 0 4px 16px rgba(37,99,199,0.35) !important;
-    transition: all 0.25s ease !important; margin-top: 8px;
+    background: linear-gradient(135deg, #2563c7 0%, #1a4fa8 100%) !important;
+    color: white !important; border: none !important;
+    border-radius: 12px !important; padding: 12px 16px !important;
+    font-weight: 700 !important; font-size: 14px !important;
+    letter-spacing: 0.3px; margin-top: 10px;
+    box-shadow: 0 4px 16px rgba(37,99,199,0.3) !important;
+    transition: all 0.2s ease !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 24px rgba(37,99,199,0.45) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(37,99,199,0.4) !important;
 }
-[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.12) !important; margin: 16px 0 !important; }
 
+/* Doc pills */
+.doc-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 8px 12px;
+    font-size: 12px; color: #b8c8f0 !important;
+    margin: 5px 0; display: flex;
+    align-items: center; gap: 8px;
+    word-break: break-all; line-height: 1.4;
+}
+
+/* Chips */
+.chip {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 7px 12px;
+    font-size: 12px; color: #b8c8f0 !important;
+    line-height: 1.5; margin: 4px 0; display: block;
+    transition: all 0.2s ease;
+}
+.chip:hover {
+    background: rgba(255,255,255,0.10);
+}
+
+/* Download buttons */
 [data-testid="stSidebar"] [data-testid="stDownloadButton"] > button {
     width: 100% !important;
-    background: rgba(255,255,255,0.08) !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    color: #c8daff !important; border-radius: 12px !important;
-    font-size: 13px !important; font-weight: 600 !important;
-    margin-top: 6px !important; padding: 10px 16px !important;
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    color: #b8c8f0 !important; border-radius: 10px !important;
+    font-size: 12px !important; font-weight: 600 !important;
+    margin-top: 6px !important; padding: 9px 14px !important;
 }
 [data-testid="stSidebar"] [data-testid="stDownloadButton"] > button:hover {
-    background: rgba(255,255,255,0.15) !important;
-    border-color: rgba(100,160,255,0.5) !important;
+    background: rgba(255,255,255,0.12) !important;
 }
 
-.doc-pill {
-    background: rgba(74,144,217,0.2); border: 1px solid rgba(74,144,217,0.35);
-    border-radius: 20px; padding: 5px 12px; font-size: 12px;
-    color: #c8daff !important; margin: 4px 0;
-    display: flex; align-items: center; gap: 6px; word-break: break-all;
+/* Divider */
+[data-testid="stSidebar"] hr {
+    border-color: rgba(255,255,255,0.08) !important;
+    margin: 20px 0 !important;
 }
-.sidebar-section-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-    text-transform: uppercase; color: #6a9ad4 !important; margin: 0 0 8px;
-}
-.chip {
-    background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 20px; padding: 5px 12px; font-size: 12px;
-    color: #c8daff !important; line-height: 1.5; margin: 3px 0; display: block;
+
+/* User profile card */
+.user-profile-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 12px 14px;
+    margin-bottom: 20px;
 }
 
 /* ── Top Navbar ── */
