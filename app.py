@@ -686,6 +686,23 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("""
+    <script>
+    function cleanUploader() {
+        const uploader = window.parent.document.querySelector('[data-testid="stFileUploader"]');
+        if (uploader) {
+            const small = uploader.querySelector('small');
+            if (small) small.style.display = 'none';
+            const svgs = uploader.querySelectorAll('svg');
+            svgs.forEach(s => s.style.display = 'none');
+            const imgs = uploader.querySelectorAll('img');
+            imgs.forEach(i => i.style.display = 'none');
+        }
+    }
+    setInterval(cleanUploader, 300);
+    </script>
+    """, unsafe_allow_html=True)
+
     # User profile chip
     if st.session_state.user_name:
         mood_emoji_map = {"Happy":"😊","Relieved":"😌","Patient":"🏥","Sad":"😔","Neutral":"😐","Anxious":"😟","Irritable":"😤","Tired":"😴","Strong":"💪","Unwell":"🤒","Calm":"🧘","Confused":"😕"}
