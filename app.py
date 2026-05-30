@@ -936,6 +936,7 @@ with main_col:
         }
 
         # ── No documents yet ─────────────────────────────────
+        st.write(f"DEBUG: retriever={st.session_state.retriever is not None}, active_agent={st.session_state.active_agent}, agent_result={st.session_state.agent_result}")
         if st.session_state.retriever is None:
             st.markdown("""
             <div style="text-align:center; margin:16px auto 32px; padding:40px 32px;
