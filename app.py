@@ -171,12 +171,14 @@ header { visibility: hidden; }
     width: 100%;
     background: linear-gradient(135deg, #3a7bd5, #1a4fa8) !important;
     color: white !important; border: none !important;
-    border-radius: 14px !important; padding: 13px 16px !important;
-    font-weight: 800 !important; font-size: 13px !important;
+    border-radius: 14px !important; padding: 15px 16px !important;
+    font-weight: 800 !important; font-size: 14px !important;
     letter-spacing: 0.3px; margin-top: 12px;
     box-shadow: 0 6px 20px rgba(26,79,168,0.45) !important;
     transition: all 0.2s ease !important;
     white-space: nowrap !important;
+    min-height: 56px !important;
+    line-height: 1.2 !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     transform: translateY(-2px) !important;
@@ -746,7 +748,7 @@ with st.sidebar:
             </div>''', unsafe_allow_html=True)
 
     if uploaded_files:
-        col_l, col_btn, col_r = st.columns([1, 4, 1])
+        col_l, col_btn, col_r = st.columns([0.1, 5, 0.1])
         with col_btn:
             if st.button("✨ Process All Documents", use_container_width=True):
                 st.session_state.processing = True
