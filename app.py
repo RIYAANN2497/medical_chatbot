@@ -774,19 +774,6 @@ with st.sidebar:
                 st.rerun()
 
 
-    # ── Email SMTP config (when email agent active) ───────────
-    if st.session_state.active_agent == "📧 Email Report" or st.session_state.get("run_all_triggered"):
-        st.markdown("---")
-        st.markdown('<p class="sidebar-section-label">Email Configuration</p>', unsafe_allow_html=True)
-        with st.expander("⚙️ SMTP Settings", expanded=True):
-            sender_email  = st.text_input("Sender Gmail", value=os.getenv("SMTP_SENDER", ""), placeholder="yourname@gmail.com", key="smtp_sender")
-            app_password  = st.text_input("App Password", value=os.getenv("SMTP_PASSWORD", ""), type="password", placeholder="16-char app password", key="smtp_pass")
-            recipient_email = st.text_input("Recipient Email", value=st.session_state.recipient_email, placeholder="doctor@hospital.com", key="smtp_recipient")
-            if sender_email and app_password:
-                st.session_state.smtp_config = {"sender_email": sender_email, "app_password": app_password}
-            else:
-                st.session_state.smtp_config = None
-            st.session_state.recipient_email = recipient_email
 
     # ── Chat-specific: export & suggestions ──────────────────
     if st.session_state.active_tab == "chat":
@@ -969,63 +956,222 @@ with main_col:
         # ── Viewing a single agent result ────────────────────
         elif st.session_state.active_agent is not None:
 
-            # Run agent if needed
-            if st.session_state.agent_running and st.session_state.agent_result is None:
-                with st.spinner(f"Running {st.session_state.active_agent}…"):
-                    try:
-                        result = orchestrator.run(
-                            agent_name=st.session_state.active_agent,
-                            retriever=st.session_state.retriever,
-                            user_name=st.session_state.user_name,
-                            mood=st.session_state.user_mood,
-                            user_whom=st.session_state.user_whom,
-                            user_age=st.session_state.user_age,
-                            user_conditions=st.session_state.user_conditions,
-                            summaries=st.session_state.summaries,
-                            smtp_config=st.session_state.get("smtp_config"),
-                            recipient_email=st.session_state.get("recipient_email", ""),
-                        )
-                        st.session_state.agent_result = result
-                        st.session_state.agent_statuses[st.session_state.active_agent] = "done"
-                        st.session_state.all_agents_results[st.session_state.active_agent] = result
-                    except Exception as e:
-                        st.session_state.agent_result = f"❌ Agent error: {e}"
-                    finally:
-                        st.session_state.agent_running = False
-                st.rerun()
-
             if st.session_state.agent_result:
                 agent_name = st.session_state.active_agent
                 descriptions = orchestrator.agent_descriptions
 
-                st.markdown(f"""
-                <div class="agent-result-panel">
-                    <div class="agent-result-header">{agent_name}</div>
-                    <div class="agent-result-sub">{descriptions.get(agent_name, '')}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                # ── Email agent gets Gmail-style UI ──────────
+                if agent_name == "📧 Email Report":
+                    st.markdown(f"""
+                    <div class="agent-result-panel">
+                        <div class="agent-result-header">{agent_name}</div>
+                        <div class="agent-result-sub">{descriptions.get(agent_name, '')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                st.markdown(st.session_state.agent_result)
-                st.markdown("<br>", unsafe_allow_html=True)
+                    # SMTP config section
+                    st.markdown("""
+                    <div style="background:white;border:0.5px solid rgba(74,144,217,0.2);
+                        border-radius:16px;overflow:hidden;margin-bottom:20px;">
+                        <div style="padding:12px 18px;border-bottom:0.5px solid rgba(74,144,217,0.15);
+                            display:flex;align-items:center;gap:8px;background:#f8faff;">
+                            <span style="font-size:15px;">⚙️</span>
+                            <span style="font-size:13px;font-weight:700;color:#0d2b6e;">SMTP Configuration</span>
+                            <span style="font-size:11px;color:#5a7abf;margin-left:4px;">
+                                — use a Gmail <a href="https://myaccount.google.com/apppasswords"
+                                target="_blank" style="color:#2451b3;">app password</a>
+                            </span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                c1, c2, c3 = st.columns([1, 1, 1])
-                with c1:
-                    st.download_button(
-                        label="📄 Download Result",
-                        data=st.session_state.agent_result.encode("utf-8"),
-                        file_name=f"medichat_{agent_name.replace(' ','_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
-                        mime="text/plain", use_container_width=True,
+                    smtp_col1, smtp_col2 = st.columns(2)
+                    with smtp_col1:
+                        sender_email = st.text_input(
+                            "Sender Gmail",
+                            value=os.getenv("SMTP_SENDER", ""),
+                            placeholder="yourname@gmail.com",
+                            key="email_sender_main",
+                        )
+                    with smtp_col2:
+                        app_password = st.text_input(
+                            "App Password",
+                            value=os.getenv("SMTP_PASSWORD", ""),
+                            type="password",
+                            placeholder="16-character app password",
+                            key="email_apppass_main",
+                        )
+
+                    if sender_email and app_password:
+                        st.session_state.smtp_config = {
+                            "sender_email": sender_email,
+                            "app_password": app_password,
+                        }
+                    else:
+                        st.session_state.smtp_config = None
+
+                    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+                    # Gmail-style compose window
+                    st.markdown("""
+                    <div style="background:white;border-radius:16px;overflow:hidden;
+                        box-shadow:0 4px 24px rgba(13,43,110,0.12);
+                        border:0.5px solid rgba(74,144,217,0.2);">
+                        <div style="background:#1a3d8f;padding:10px 18px;
+                            display:flex;align-items:center;justify-content:space-between;">
+                            <span style="font-size:13px;font-weight:600;color:#fff;">New message</span>
+                            <div style="display:flex;gap:14px;">
+                                <span style="color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">—</span>
+                                <span style="color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">⛶</span>
+                                <span style="color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">✕</span>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # To field
+                    st.markdown("""
+                    <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
+                        border-right:0.5px solid rgba(74,144,217,0.2);
+                        border-bottom:0.5px solid rgba(74,144,217,0.1);
+                        padding:2px 18px 0;">
+                        <p style="font-size:11px;color:#8aaee0;margin:6px 0 0;font-weight:600;
+                            letter-spacing:0.5px;text-transform:uppercase;">To</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    recipient_email = st.text_input(
+                        "to_field",
+                        value=st.session_state.get("recipient_email", ""),
+                        placeholder="doctor@hospital.com",
+                        label_visibility="collapsed",
+                        key="email_recipient_main",
                     )
-                with c2:
-                    if st.button("🔄 Run Again", use_container_width=True):
-                        st.session_state.agent_result = None
-                        st.session_state.agent_running = True
-                        st.rerun()
-                with c3:
-                    if st.button("← Back to Agents", use_container_width=True):
-                        st.session_state.active_agent = None
-                        st.session_state.agent_result = None
-                        st.rerun()
+                    st.session_state.recipient_email = recipient_email
+
+                    # Subject field
+                    st.markdown("""
+                    <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
+                        border-right:0.5px solid rgba(74,144,217,0.2);
+                        border-bottom:0.5px solid rgba(74,144,217,0.1);
+                        padding:2px 18px 0;">
+                        <p style="font-size:11px;color:#8aaee0;margin:6px 0 0;font-weight:600;
+                            letter-spacing:0.5px;text-transform:uppercase;">Subject</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    email_subject = st.text_input(
+                        "subject_field",
+                        value="Medical Report Summary — MediChat",
+                        label_visibility="collapsed",
+                        key="email_subject_main",
+                    )
+
+                    # Body — parse draft from agent result
+                    draft_body = st.session_state.agent_result
+                    # Strip the "Draft Email Ready" header if present
+                    if "---" in draft_body:
+                        parts = draft_body.split("---")
+                        draft_body = parts[1].strip() if len(parts) > 1 else draft_body
+
+                    st.markdown("""
+                    <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
+                        border-right:0.5px solid rgba(74,144,217,0.2);
+                        padding:2px 18px 0;">
+                        <p style="font-size:11px;color:#8aaee0;margin:6px 0 0;font-weight:600;
+                            letter-spacing:0.5px;text-transform:uppercase;">Message</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    email_body = st.text_area(
+                        "body_field",
+                        value=draft_body,
+                        height=240,
+                        label_visibility="collapsed",
+                        key="email_body_main",
+                    )
+
+                    # Bottom bar with Send button
+                    st.markdown("""
+                    <div style="background:white;border:0.5px solid rgba(74,144,217,0.2);
+                        border-top:none;border-radius:0 0 16px 16px;
+                        padding:10px 18px;display:flex;align-items:center;gap:10px;">
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    send_col, dl_col, back_col = st.columns([2, 1, 1])
+                    with send_col:
+                        if st.button("📤  Send Email", use_container_width=True, type="primary", key="send_email_btn"):
+                            if not recipient_email:
+                                st.error("Please enter a recipient email address.")
+                            elif not st.session_state.smtp_config:
+                                st.error("Please fill in your Gmail address and app password above.")
+                            else:
+                                with st.spinner("Sending…"):
+                                    import smtplib
+                                    from email.mime.multipart import MIMEMultipart
+                                    from email.mime.text import MIMEText
+                                    try:
+                                        msg = MIMEMultipart("alternative")
+                                        msg["Subject"] = email_subject
+                                        msg["From"] = st.session_state.smtp_config["sender_email"]
+                                        msg["To"] = recipient_email
+                                        footer = "\n\n---\nSent via MediChat. For informational purposes only. Always consult your doctor."
+                                        msg.attach(MIMEText(email_body + footer, "plain"))
+                                        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                                            server.login(
+                                                st.session_state.smtp_config["sender_email"],
+                                                st.session_state.smtp_config["app_password"],
+                                            )
+                                            server.sendmail(
+                                                st.session_state.smtp_config["sender_email"],
+                                                recipient_email,
+                                                msg.as_string(),
+                                            )
+                                        st.success(f"✅ Email sent to {recipient_email}!")
+                                    except Exception as e:
+                                        st.error(f"❌ Failed to send: {e}")
+                    with dl_col:
+                        st.download_button(
+                            label="📄 Download",
+                            data=email_body.encode("utf-8"),
+                            file_name=f"medichat_email_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                            mime="text/plain",
+                            use_container_width=True,
+                        )
+                    with back_col:
+                        if st.button("← Back", use_container_width=True, key="email_back_btn"):
+                            st.session_state.active_agent = None
+                            st.session_state.agent_result = None
+                            st.rerun()
+
+                # ── All other agents ─────────────────────────
+                else:
+                    st.markdown(f"""
+                    <div class="agent-result-panel">
+                        <div class="agent-result-header">{agent_name}</div>
+                        <div class="agent-result-sub">{descriptions.get(agent_name, '')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    st.markdown(st.session_state.agent_result)
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    c1, c2, c3 = st.columns([1, 1, 1])
+                    with c1:
+                        st.download_button(
+                            label="📄 Download Result",
+                            data=st.session_state.agent_result.encode("utf-8"),
+                            file_name=f"medichat_{agent_name.replace(' ','_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                            mime="text/plain", use_container_width=True,
+                        )
+                    with c2:
+                        if st.button("🔄 Run Again", use_container_width=True):
+                            st.session_state.agent_result = None
+                            st.session_state.agent_running = True
+                            st.rerun()
+                    with c3:
+                        if st.button("← Back to Agents", use_container_width=True):
+                            st.session_state.active_agent = None
+                            st.session_state.agent_result = None
+                            st.rerun()
 
         # ── Agent grid — landing (documents loaded) ──────────
         else:
