@@ -125,23 +125,32 @@ header { visibility: hidden; }
 
 /* File uploader */
 [data-testid="stFileUploader"] {
-    background: rgba(255,255,255,0.04) !important;
-    border: 1.5px dashed rgba(255,255,255,0.12) !important;
-    border-radius: 16px !important; padding: 8px !important;
+    background: rgba(5,15,50,0.6) !important;
+    border: 2px dashed rgba(74,144,217,0.5) !important;
+    border-radius: 16px !important;
+    padding: 12px !important;
 }
 [data-testid="stFileUploader"]:hover {
-    border-color: rgba(100,160,255,0.35) !important;
-    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(74,144,217,0.9) !important;
 }
 [data-testid="stFileUploader"] button {
-    background: rgba(74,144,217,0.2) !important;
-    border: 1px solid rgba(74,144,217,0.35) !important;
-    color: #b8d4ff !important; border-radius: 10px !important;
-    font-weight: 700 !important; font-size: 12px !important;
+    background: rgba(74,144,217,0.3) !important;
+    border: 1px solid rgba(74,144,217,0.6) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
 }
-[data-testid="stFileUploader"] small {
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] span[class*="instructions"] {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
 }
+[data-testid="stFileUploader"] * { color: #c8daff !important; -webkit-text-fill-color: #c8daff !important; }
+[data-testid="stFileUploader"] button * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 /* Process button */
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
