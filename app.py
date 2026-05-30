@@ -770,79 +770,45 @@ agents_active   = "active" if active_tab == "agents"    else ""
 chat_active     = "active" if active_tab == "chat"       else ""
 docs_active     = "active" if active_tab == "documents"  else ""
 
+# ── TOP NAVBAR (pure Streamlit columns, no CSS hacks) ─────────
 st.markdown(f"""
-<div class="top-navbar">
-    <div class="navbar-brand">
-        <span class="brand-icon">🏥</span>
-        <span class="brand-name">MediChat</span>
+<div style="background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(74,144,217,0.15);
+    box-shadow:0 2px 20px rgba(13,43,110,0.08);
+    padding:0 32px; height:64px;
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:26px;">🏥</span>
+        <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#0d2b6e;">MediChat</span>
     </div>
-    <div class="navbar-tabs" id="navbar-tabs-placeholder"></div>
-    <div class="navbar-user">{user_display}</div>
+    <div style="font-size:13px;color:#2451b3;font-weight:600;
+        background:rgba(74,144,217,0.08);border-radius:20px;padding:6px 14px;">
+        {user_display}
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Navbar tab buttons (Streamlit buttons styled over navbar)
-nav_cols = st.columns([3, 1, 1, 1, 3])
-with nav_cols[1]:
-    agents_type = "primary" if active_tab == "agents" else "secondary"
-    if st.button("🤖  Agents", key="nav_agents", use_container_width=True, type=agents_type):
+nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns([2, 1, 1, 1, 2])
+with nav_c2:
+    if st.button("🤖 Agents", key="nav_agents", use_container_width=True,
+                 type="primary" if active_tab == "agents" else "secondary"):
         st.session_state.active_tab = "agents"
         st.session_state.active_agent = None
         st.session_state.agent_result = None
         st.rerun()
-with nav_cols[2]:
-    chat_type = "primary" if active_tab == "chat" else "secondary"
-    if st.button("💬  Chat", key="nav_chat", use_container_width=True, type=chat_type):
+with nav_c3:
+    if st.button("💬 Chat", key="nav_chat", use_container_width=True,
+                 type="primary" if active_tab == "chat" else "secondary"):
         st.session_state.active_tab = "chat"
         st.rerun()
-with nav_cols[3]:
-    docs_type = "primary" if active_tab == "documents" else "secondary"
-    if st.button("📁  Documents", key="nav_docs", use_container_width=True, type=docs_type):
+with nav_c4:
+    if st.button("📁 Docs", key="nav_docs", use_container_width=True,
+                 type="primary" if active_tab == "documents" else "secondary"):
         st.session_state.active_tab = "documents"
         st.rerun()
 
-# Extra CSS to push nav buttons into the navbar visually
-st.markdown("""
-<style>
-/* Pull the 3 nav buttons up into the navbar */
-div[data-testid="stHorizontalBlock"]:has(button[kind][data-testid]) {
-    margin-top: -56px !important;
-    position: relative;
-    z-index: 1000;
-    pointer-events: auto;
-}
-/* Style the nav buttons to look like navbar tabs */
-div[data-testid="stHorizontalBlock"] > div:nth-child(2) button,
-div[data-testid="stHorizontalBlock"] > div:nth-child(3) button,
-div[data-testid="stHorizontalBlock"] > div:nth-child(4) button {
-    border-radius: 12px !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    height: 40px !important;
-    padding: 0 16px !important;
-    border: none !important;
-    font-family: 'Nunito', sans-serif !important;
-    letter-spacing: 0.2px !important;
-}
-div[data-testid="stHorizontalBlock"] > div:nth-child(2) button[kind="secondary"],
-div[data-testid="stHorizontalBlock"] > div:nth-child(3) button[kind="secondary"],
-div[data-testid="stHorizontalBlock"] > div:nth-child(4) button[kind="secondary"] {
-    background: transparent !important;
-    color: #5a7abf !important;
-    box-shadow: none !important;
-}
-div[data-testid="stHorizontalBlock"] > div:nth-child(2) button[kind="primary"],
-div[data-testid="stHorizontalBlock"] > div:nth-child(3) button[kind="primary"],
-div[data-testid="stHorizontalBlock"] > div:nth-child(4) button[kind="primary"] {
-    background: linear-gradient(135deg, #2451b3, #4a90d9) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(36,81,179,0.3) !important;
-}
-/* Spacer cols — hide their buttons */
-div[data-testid="stHorizontalBlock"] > div:nth-child(1),
-div[data-testid="stHorizontalBlock"] > div:nth-child(5) { pointer-events: none; opacity: 0; }
-</style>
-""", unsafe_allow_html=True)
+
 
 
 # ── Main content ──────────────────────────────────────────────
@@ -1001,8 +967,8 @@ with main_col:
 
             agents_list = list(orchestrator.agent_descriptions.items())
             row1 = st.columns(3)
-            row2_s1, row2_c1, row2_c2, row2_s2 = st.columns([0.5, 1, 1, 0.5])
-            grid_cols = row1 + [row2_c1, row2_c2]
+            row2 = st.columns(3)
+            grid_cols = list(row1) + list(row2)
 
             for idx, (agent_name, agent_desc) in enumerate(agents_list):
                 icon, color = agent_icons.get(agent_name, ("🤖", "#4a90d9"))
