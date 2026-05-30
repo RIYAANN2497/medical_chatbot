@@ -74,6 +74,22 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background-color
 .stApp { background: #f0f4ff; min-height: 100vh; }
 
 /* ── Sidebar ── */
+/* Always show the sidebar toggle arrow */
+[data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: fixed !important;
+    top: 14px !important;
+    left: 14px !important;
+    z-index: 99999 !important;
+    background: white !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 12px rgba(13,43,110,0.2) !important;
+    width: 36px !important;
+    height: 36px !important;
+}
+
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0d2b6e 0%, #163580 40%, #1a3d8f 100%) !important;
     border-right: none !important;
