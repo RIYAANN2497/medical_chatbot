@@ -1305,6 +1305,7 @@ with main_col:
 
                     btn_label = "✅ View Result" if status_key == "done" else "▶ Run Agent"
                     if st.button(btn_label, key=f"card_btn_{agent_name}", use_container_width=True):
+                        st.session_state.active_tab = "agents"
                         if agent_name in st.session_state.all_agents_results:
                             st.session_state.agent_result = st.session_state.all_agents_results[agent_name]
                             st.session_state.agent_running = False
