@@ -116,9 +116,7 @@ header { visibility: hidden; }
     margin: 0 !important;
     border-radius: 8px !important;
 }
-[data-testid="stFileUploader"] small,
-[data-testid="stFileUploader"] span,
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
+[data-testid="stFileUploader"] small {
     display: none !important;
 }
 [data-testid="stSidebar"] .stMarkdown p,
