@@ -80,104 +80,67 @@ header { visibility: hidden; }
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 
 [data-testid="stSidebar"] {
-    background: linear-gradient(160deg, #0a1f5c 0%, #112272 50%, #1a3d8f 100%) !important;
+    background: linear-gradient(180deg, #071a4a 0%, #0d2b6e 60%, #1a3d8f 100%) !important;
     border-right: none !important;
-    box-shadow: 6px 0 32px rgba(10,31,92,0.25);
-    min-width: 280px !important;
-    max-width: 280px !important;
+    box-shadow: 8px 0 40px rgba(7,26,74,0.35) !important;
+    min-width: 300px !important;
+    max-width: 300px !important;
 }
-[data-testid="stSidebar"] > div:first-child {
-    padding: 0 !important;
-}
-[data-testid="stSidebar"] * { color: #e8eeff !important; }
-
+[data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
+[data-testid="stSidebar"] * { color: #dce8ff !important; }
 [data-testid="stFileUploader"] *:not(button) {
     color: #ffffff !important; opacity: 1 !important;
     -webkit-text-fill-color: #ffffff !important;
 }
 [data-testid="stSidebar"] .stMarkdown p,
-[data-testid="stSidebar"] .stMarkdown li {
-    color: #b8c8f0 !important; font-size: 13px; line-height: 1.7;
-}
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: #ffffff !important;
-    font-family: 'Playfair Display', serif !important;
-    font-size: 18px !important; letter-spacing: 0.3px;
-}
-
-/* Sidebar logo area */
-.sidebar-logo {
-    text-align: center;
-    padding: 32px 20px 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    margin-bottom: 24px;
-    background: rgba(0,0,0,0.15);
-}
-.sidebar-logo .logo-icon {
-    font-size: 44px; display: block; margin-bottom: 10px;
-}
-.sidebar-logo .logo-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px; font-weight: 700;
-    color: #ffffff !important; letter-spacing: 0.5px;
-}
-.sidebar-logo .logo-subtitle {
-    font-size: 11px; color: #6a9ad4 !important;
-    margin-top: 3px; letter-spacing: 2px;
-    text-transform: uppercase;
-}
+[data-testid="stSidebar"] .stMarkdown li { color: #9ab4e0 !important; font-size: 13px; line-height: 1.7; }
 
 /* Section labels */
 .sidebar-section-label {
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase;
-    color: #4a7abf !important; margin: 0 0 10px;
-    padding: 0 4px;
+    font-size: 9px; font-weight: 800; letter-spacing: 2.5px;
+    text-transform: uppercase; color: #4a6aaa !important;
+    margin: 0 0 8px; display: block;
 }
 
 /* File uploader */
 [data-testid="stFileUploader"] {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1.5px dashed rgba(255,255,255,0.15) !important;
-    border-radius: 14px !important;
-    padding: 10px !important;
-    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1.5px dashed rgba(255,255,255,0.12) !important;
+    border-radius: 16px !important; padding: 8px !important;
 }
 [data-testid="stFileUploader"]:hover {
-    border-color: rgba(100,160,255,0.4) !important;
-    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(100,160,255,0.35) !important;
+    background: rgba(255,255,255,0.07) !important;
 }
 [data-testid="stFileUploader"] button {
-    background: rgba(100,160,255,0.15) !important;
-    border: 1px solid rgba(100,160,255,0.3) !important;
-    color: #c8daff !important; border-radius: 10px !important;
-    font-weight: 600 !important; font-size: 12px !important;
+    background: rgba(74,144,217,0.2) !important;
+    border: 1px solid rgba(74,144,217,0.35) !important;
+    color: #b8d4ff !important; border-radius: 10px !important;
+    font-weight: 700 !important; font-size: 12px !important;
 }
 
 /* Process button */
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
-    background: linear-gradient(135deg, #2563c7 0%, #1a4fa8 100%) !important;
+    background: linear-gradient(135deg, #3a7bd5, #1a4fa8) !important;
     color: white !important; border: none !important;
-    border-radius: 12px !important; padding: 12px 16px !important;
-    font-weight: 700 !important; font-size: 14px !important;
-    letter-spacing: 0.3px; margin-top: 10px;
-    box-shadow: 0 4px 16px rgba(37,99,199,0.3) !important;
+    border-radius: 14px !important; padding: 13px 16px !important;
+    font-weight: 800 !important; font-size: 14px !important;
+    letter-spacing: 0.3px; margin-top: 12px;
+    box-shadow: 0 6px 20px rgba(26,79,168,0.45) !important;
     transition: all 0.2s ease !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(37,99,199,0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px rgba(26,79,168,0.55) !important;
 }
 
 /* Doc pills */
 .doc-pill {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px; padding: 8px 12px;
-    font-size: 12px; color: #b8c8f0 !important;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 9px 14px;
+    font-size: 12px; color: #9ab4e0 !important;
     margin: 5px 0; display: flex;
     align-items: center; gap: 8px;
     word-break: break-all; line-height: 1.4;
@@ -185,43 +148,28 @@ header { visibility: hidden; }
 
 /* Chips */
 .chip {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px; padding: 7px 12px;
-    font-size: 12px; color: #b8c8f0 !important;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 8px 12px;
+    font-size: 12px; color: #9ab4e0 !important;
     line-height: 1.5; margin: 4px 0; display: block;
-    transition: all 0.2s ease;
-}
-.chip:hover {
-    background: rgba(255,255,255,0.10);
 }
 
 /* Download buttons */
 [data-testid="stSidebar"] [data-testid="stDownloadButton"] > button {
     width: 100% !important;
-    background: rgba(255,255,255,0.06) !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    color: #b8c8f0 !important; border-radius: 10px !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    color: #9ab4e0 !important; border-radius: 12px !important;
     font-size: 12px !important; font-weight: 600 !important;
-    margin-top: 6px !important; padding: 9px 14px !important;
+    margin-top: 6px !important; padding: 10px 14px !important;
 }
 [data-testid="stSidebar"] [data-testid="stDownloadButton"] > button:hover {
-    background: rgba(255,255,255,0.12) !important;
+    background: rgba(255,255,255,0.10) !important;
 }
 
 /* Divider */
-[data-testid="stSidebar"] hr {
-    border-color: rgba(255,255,255,0.08) !important;
-    margin: 20px 0 !important;
-}
-
-/* User profile card */
-.user-profile-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 14px; padding: 12px 14px;
-    margin-bottom: 20px;
-}
+[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.06) !important; margin: 18px 0 !important; }
 
 /* ── Top Navbar ── */
 .top-navbar {
@@ -677,13 +625,16 @@ if not st.session_state.onboarding_done:
 # ── SIDEBAR ───────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style="text-align:center; padding:28px 16px 20px; margin:-16px -16px 20px;
-        background:rgba(0,0,0,0.2); border-bottom:1px solid rgba(255,255,255,0.07);">
-        <div style="font-size:42px; margin-bottom:8px;">🏥</div>
-        <div style="font-family:'Playfair Display',serif; font-size:22px;
-            font-weight:700; color:#fff; letter-spacing:0.5px;">MediChat</div>
-        <div style="font-size:10px; color:#5a8fd4; letter-spacing:2.5px;
-            text-transform:uppercase; margin-top:4px;">AI Medical Assistant</div>
+    <div style="text-align:center; padding:36px 20px 28px; margin:-16px -16px 24px;
+        background:linear-gradient(180deg,rgba(0,0,0,0.3),rgba(0,0,0,0.1));
+        border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="width:64px;height:64px;background:linear-gradient(135deg,#1a4fa8,#3a7bd5);
+            border-radius:20px;display:flex;align-items:center;justify-content:center;
+            font-size:32px;margin:0 auto 14px;box-shadow:0 8px 24px rgba(26,79,168,0.5);">🏥</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;
+            font-weight:700;color:#ffffff;letter-spacing:0.5px;margin-bottom:4px;">MediChat</div>
+        <div style="font-size:9px;color:#4a6aaa;letter-spacing:3px;text-transform:uppercase;">
+            AI Medical Assistant</div>
     </div>
     """, unsafe_allow_html=True)
 
