@@ -748,7 +748,7 @@ with st.sidebar:
             </div>''', unsafe_allow_html=True)
 
     if uploaded_files:
-        col_l, col_btn, col_r = st.columns([0.1, 4, 1])
+        col_l, col_btn, col_r = st.columns([0.5, 4, 0.5])
         with col_btn:
             if st.button("✨ Process All Documents", use_container_width=True):
                 st.session_state.processing = True
