@@ -157,16 +157,26 @@ header { visibility: hidden; }
 }
 [data-testid="stFileUploader"] * { color: ##0d2b6e !important; -webkit-text-fill-color: ##0d2b6e !important; }
 [data-testid="stFileUploader"] button * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+
+[data-testid="stFileUploader"] svg {
+    display: none !important;
+}
+[data-testid="stFileUploader"] [class*="fileIcon"],
+[data-testid="stFileUploader"] [class*="thumbnail"] {
+    display: none !important;
+}
+
 /* Process button */
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
     background: linear-gradient(135deg, #3a7bd5, #1a4fa8) !important;
     color: white !important; border: none !important;
     border-radius: 14px !important; padding: 13px 16px !important;
-    font-weight: 800 !important; font-size: 14px !important;
+    font-weight: 800 !important; font-size: 13px !important;
     letter-spacing: 0.3px; margin-top: 12px;
     box-shadow: 0 6px 20px rgba(26,79,168,0.45) !important;
     transition: all 0.2s ease !important;
+    white-space: nowrap !important;
 }
 [data-testid="stSidebar"] .stButton > button:hover {
     transform: translateY(-2px) !important;
