@@ -116,7 +116,9 @@ header { visibility: hidden; }
     margin: 0 !important;
     border-radius: 8px !important;
 }
-[data-testid="stFileUploader"] small {
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] span,
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
     display: none !important;
 }
 [data-testid="stSidebar"] .stMarkdown p,
@@ -748,7 +750,7 @@ with st.sidebar:
             </div>''', unsafe_allow_html=True)
 
     if uploaded_files:
-        col_l, col_btn, col_r = st.columns([0.1, 5, 0.1])
+        col_l, col_btn, col_r = st.columns([0.1, 4, 1])
         with col_btn:
             if st.button("✨ Process All Documents", use_container_width=True):
                 st.session_state.processing = True
