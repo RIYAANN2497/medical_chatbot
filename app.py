@@ -82,8 +82,13 @@ html, body, [class*="css"] { font-family: 'Nunito', sans-serif; background-color
     opacity: 1 !important;
     z-index: 99999 !important;
     left: 0 !important;
-    top: 70px !important;
+    top: 130px !important;
     position: fixed !important;
+    background: white !important;
+    border-radius: 0 8px 8px 0 !important;
+    box-shadow: 2px 2px 8px rgba(13,43,110,0.2) !important;
+    width: 24px !important;
+    height: 48px !important;
 }
 
 [data-testid="stSidebar"] {
