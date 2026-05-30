@@ -956,6 +956,31 @@ with main_col:
         # ── Viewing a single agent result ────────────────────
         elif st.session_state.active_agent is not None:
 
+            # Run agent if needed
+            if st.session_state.agent_running and st.session_state.agent_result is None:
+                with st.spinner(f"Running {st.session_state.active_agent}…"):
+                    try:
+                        result = orchestrator.run(
+                            agent_name=st.session_state.active_agent,
+                            retriever=st.session_state.retriever,
+                            user_name=st.session_state.user_name,
+                            mood=st.session_state.user_mood,
+                            user_whom=st.session_state.user_whom,
+                            user_age=st.session_state.user_age,
+                            user_conditions=st.session_state.user_conditions,
+                            summaries=st.session_state.summaries,
+                            smtp_config=st.session_state.get("smtp_config"),
+                            recipient_email=st.session_state.get("recipient_email", ""),
+                        )
+                        st.session_state.agent_result = result
+                        st.session_state.agent_statuses[st.session_state.active_agent] = "done"
+                        st.session_state.all_agents_results[st.session_state.active_agent] = result
+                    except Exception as e:
+                        st.session_state.agent_result = f"❌ Agent error: {e}"
+                    finally:
+                        st.session_state.agent_running = False
+                st.rerun()
+
             if st.session_state.agent_result:
                 agent_name = st.session_state.active_agent
                 descriptions = orchestrator.agent_descriptions
@@ -1194,7 +1219,7 @@ with main_col:
                             has_smtp = st.session_state.get("smtp_config") and st.session_state.get("recipient_email")
                             if not has_smtp:
                                 st.session_state.agent_statuses[aname] = "waiting"
-                                st.warning("📧 Email agent is waiting — please fill in SMTP settings in the sidebar.")
+                                st.warning("📧 Email agent is waiting — click the Email Report card and fill in your SMTP settings there.")
                                 break
                         st.session_state.agent_statuses[aname] = "running"
                         with st.spinner(f"⏳ Running {aname}..."):
@@ -1231,7 +1256,7 @@ with main_col:
                             <div style="font-size:24px;margin-bottom:8px;">📧</div>
                             <div style="color:#0d2b6e;font-weight:700;font-size:14px;">Email Agent is waiting</div>
                             <div style="color:#5a7abf;font-size:12px;margin-top:4px;">
-                                Fill in your Gmail and recipient email in the sidebar to continue
+                                Click the Email Report card below to fill in your Gmail and send the report
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
