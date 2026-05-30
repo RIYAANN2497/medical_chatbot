@@ -93,17 +93,21 @@ header { visibility: hidden; }
     -webkit-text-fill-color: #0d2b6e !important;
 }
 [data-testid="stFileUploader"] {
-    background: #ffffff !important;
-    border: 2px dashed #2451b3 !important;
+    background: rgba(10,30,80,0.5) !important;
+    border: 2px dashed rgba(74,144,217,0.5) !important;
     border-radius: 16px !important; padding: 12px !important;
 }
 [data-testid="stFileUploader"]:hover {
-    border-color: #4a90d9 !important;
-    background: #f0f4ff !important;
+    border-color: rgba(74,144,217,0.8) !important;
+    background: rgba(10,30,80,0.6) !important;
+}
+[data-testid="stFileUploader"] *:not(button) {
+    color: #c8daff !important;
+    -webkit-text-fill-color: #c8daff !important;
 }
 [data-testid="stFileUploader"] button {
-    background: #2451b3 !important;
-    border: none !important;
+    background: rgba(74,144,217,0.3) !important;
+    border: 1px solid rgba(74,144,217,0.6) !important;
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
     border-radius: 10px !important;
@@ -135,7 +139,9 @@ header { visibility: hidden; }
     color: #b8d4ff !important; border-radius: 10px !important;
     font-weight: 700 !important; font-size: 12px !important;
 }
-
+[data-testid="stFileUploader"] small {
+    display: none !important;
+}
 /* Process button */
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
