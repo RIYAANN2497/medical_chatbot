@@ -1223,13 +1223,9 @@ with main_col:
                 for aname in orchestrator.agent_names:
                     status = st.session_state.agent_statuses.get(aname, "")
                     if status == "pending":
-                        # Email agent needs SMTP config
+                        # Email agent — just generate the draft, don't require SMTP upfront
                         if aname == email_agent:
-                            has_smtp = st.session_state.get("smtp_config") and st.session_state.get("recipient_email")
-                            if not has_smtp:
-                                st.session_state.agent_statuses[aname] = "waiting"
-                                st.warning("📧 Email agent is waiting — click the Email Report card and fill in your SMTP settings there.")
-                                break
+                            pass  # run it like any other agent
                         st.session_state.agent_statuses[aname] = "running"
                         with st.spinner(f"⏳ Running {aname}..."):
                             try:
@@ -1252,23 +1248,6 @@ with main_col:
                                 st.session_state.agent_statuses[aname] = "done"
                         st.rerun()
 
-                # Check if email agent is waiting and now has config
-                if st.session_state.agent_statuses.get(email_agent) == "waiting":
-                    has_smtp = st.session_state.get("smtp_config") and st.session_state.get("recipient_email")
-                    if has_smtp:
-                        st.session_state.agent_statuses[email_agent] = "pending"
-                        st.rerun()
-                    else:
-                        st.markdown("""
-                        <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(74,144,217,0.3);
-                            border-radius:14px;padding:16px 20px;margin:12px 0;text-align:center;">
-                            <div style="font-size:24px;margin-bottom:8px;">📧</div>
-                            <div style="color:#0d2b6e;font-weight:700;font-size:14px;">Email Agent is waiting</div>
-                            <div style="color:#5a7abf;font-size:12px;margin-top:4px;">
-                                Click the Email Report card below to fill in your Gmail and send the report
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
 
                 # All done
                 all_done = all(
