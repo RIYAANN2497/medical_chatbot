@@ -670,6 +670,12 @@ with st.sidebar:
 
 
 # ── Document processing (always runs, regardless of tab) ─────
+if st.session_state.get("processing_error"):
+    st.error(f"❌ {st.session_state.processing_error}")
+    if st.button("Clear error"):
+        st.session_state.processing_error = None
+        st.rerun()
+
 if st.session_state.get("processing"):
     tmp_paths, original_names = [], []
     for file_info in st.session_state.get("files_to_process", []):
@@ -693,6 +699,7 @@ if st.session_state.get("processing"):
         st.session_state.chat_history = []
         st.success("✅ Documents processed successfully!")
     except Exception as e:
+        st.session_state.processing_error = str(e)
         st.error(f"Failed to process documents: {e}")
     finally:
         for path in tmp_paths:
