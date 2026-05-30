@@ -221,6 +221,23 @@ header { visibility: hidden; }
 /* Divider */
 [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.06) !important; margin: 18px 0 !important; }
 
+[data-testid="stSidebar"] input {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 10px !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+[data-testid="stSidebar"] input::placeholder {
+    color: rgba(255,255,255,0.35) !important;
+    -webkit-text-fill-color: rgba(255,255,255,0.35) !important;
+}
+[data-testid="stSidebar"] .stExpander {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px !important;
+}
+
 /* ── Top Navbar ── */
 .top-navbar {
     position: sticky; top: 0; z-index: 999;
@@ -758,7 +775,7 @@ with st.sidebar:
 
 
     # ── Email SMTP config (when email agent active) ───────────
-    if st.session_state.active_agent == "📧 Email Report":
+    if st.session_state.active_agent == "📧 Email Report" or st.session_state.get("run_all_triggered"):
         st.markdown("---")
         st.markdown('<p class="sidebar-section-label">Email Configuration</p>', unsafe_allow_html=True)
         with st.expander("⚙️ SMTP Settings", expanded=True):
