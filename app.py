@@ -102,8 +102,8 @@ header { visibility: hidden; }
     background: rgba(10,30,80,0.6) !important;
 }
 [data-testid="stFileUploader"] *:not(button) {
-    color: #c8daff !important;
-    -webkit-text-fill-color: #c8daff !important;
+    color: ##0d2b6e !important;
+    -webkit-text-fill-color: ##0d2b6e !important;
 }
 [data-testid="stFileUploader"] button {
     background: rgba(74,144,217,0.3) !important;
@@ -149,7 +149,7 @@ header { visibility: hidden; }
     height: 0 !important;
     overflow: hidden !important;
 }
-[data-testid="stFileUploader"] * { color: #c8daff !important; -webkit-text-fill-color: #c8daff !important; }
+[data-testid="stFileUploader"] * { color: ##0d2b6e !important; -webkit-text-fill-color: ##0d2b6e !important; }
 [data-testid="stFileUploader"] button * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
 /* Process button */
 [data-testid="stSidebar"] .stButton > button {
