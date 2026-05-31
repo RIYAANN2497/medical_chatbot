@@ -1089,30 +1089,18 @@ with main_col:
                         if st.button("📤  Send Email", use_container_width=True, type="primary", key="send_email_btn"):
                             if not recipient_email:
                                 st.error("Please enter a recipient email address.")
-                            elif not st.session_state.smtp_config:
-                                st.error("Please fill in your Gmail address and app password above.")
                             else:
                                 with st.spinner("Sending…"):
-                                    import smtplib
-                                    from email.mime.multipart import MIMEMultipart
-                                    from email.mime.text import MIMEText
                                     try:
-                                        msg = MIMEMultipart("alternative")
-                                        msg["Subject"] = email_subject
-                                        msg["From"] = st.session_state.smtp_config["sender_email"]
-                                        msg["To"] = recipient_email
+                                        import resend
+                                        resend.api_key = os.getenv("RESEND_API_KEY")
                                         footer = "\n\n---\nSent via MediChat. For informational purposes only. Always consult your doctor."
-                                        msg.attach(MIMEText(email_body + footer, "plain"))
-                                        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                                            server.login(
-                                                st.session_state.smtp_config["sender_email"],
-                                                st.session_state.smtp_config["app_password"],
-                                            )
-                                            server.sendmail(
-                                                st.session_state.smtp_config["sender_email"],
-                                                recipient_email,
-                                                msg.as_string(),
-                                            )
+                                        resend.Emails.send({
+                                            "from": "MediChat <onboarding@resend.dev>",
+                                            "to": recipient_email,
+                                            "subject": email_subject,
+                                            "text": email_body + footer,
+                                        })
                                         st.success(f"✅ Email sent to {recipient_email}!")
                                     except Exception as e:
                                         st.error(f"❌ Failed to send: {e}")
