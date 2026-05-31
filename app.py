@@ -1221,6 +1221,8 @@ with main_col:
                 icon, color = agent_icons.get(agent_name, ("🤖", "#4a90d9"))
                 status_key = st.session_state.agent_statuses.get(agent_name, "")
                 status_label, status_color, status_bg = status_style.get(status_key, status_style[""])
+                if agent_name == "📧 Email Report" and status_key == "done":
+                    status_label = "📝 Draft Ready"
                 done_border = "rgba(46,170,94,0.4)" if status_key == "done" else "rgba(74,144,217,0.12)"
 
                 with grid_cols[idx]:
