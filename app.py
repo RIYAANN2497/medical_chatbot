@@ -454,6 +454,7 @@ defaults = {
     "retriever": None,
     "chat_history": [],
     "uploaded_names": [],
+    "onboarding_done": True,
     "chroma_dir": None,
     "summaries": {},
     "processing": False,
@@ -467,9 +468,10 @@ defaults = {
     "agent_result": None,
     "agent_running": False,
     "smtp_config": None,
-    "active_tab": "agents",   # "chat" | "agents" | "documents"
+    "active_tab": "agents",
     "recipient_email": "",
 }
+
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -679,7 +681,7 @@ def show_onboarding():
 
 
 # ── ONBOARDING GATE (flicker-free) ───────────────────────────
-if not st.session_state.onboarding_done:
+if not st.session_state.get("onboarding_done", True):
     show_onboarding()
     st.stop()
 
