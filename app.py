@@ -57,11 +57,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st._config.set_option('theme.base', 'light')
-st._config.set_option('theme.backgroundColor', '#f0f4ff')
-st._config.set_option('theme.primaryColor', '#2451b3')
-st._config.set_option('theme.textColor', '#0d2b6e')
-st._config.set_option('theme.secondaryBackgroundColor', '#e0e8ff')
 
 # ── Global CSS ────────────────────────────────────────────────
 st.markdown("""
@@ -457,9 +452,8 @@ defaults = {
     "all_agents_results": {},
     "llm": None,
     "retriever": None,
-    "chat_history": [{"role": "assistant", "content": "Hi! Upload your medical documents from the sidebar and ask me anything — I'll explain everything clearly and simply. 🏥"}],
+    "chat_history": [],
     "uploaded_names": [],
-    "onboarding_done": True,
     "chroma_dir": None,
     "summaries": {},
     "processing": False,
