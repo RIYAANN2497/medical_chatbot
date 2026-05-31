@@ -32,7 +32,11 @@ def get_embeddings() -> HuggingFaceEmbeddings:
 def summarise_document(chunks: list[str], doc_name: str) -> str:
     from langchain_groq import ChatGroq
     from langchain_core.output_parsers import StrOutputParser
-    sample = "\n\n".join(chunks[:6])[:3000]
+    if len(chunks) <= 6:
+        selected = chunks
+    else:
+        selected = chunks[:3] + chunks[-3:]
+    sample = "\n\n".join(selected)[:3000]
     prompt = f"""You are MediChat, a warm medical assistant. Summarise this medical document clearly and in a structured way.
 
 Document: {doc_name}
@@ -81,7 +85,7 @@ def extract_text_from_pdf(pdf_path: str, max_vision_pages: int = 10) -> str:
     with fitz.open(pdf_path) as doc:
         text = "".join(page.get_text() for page in doc)
 
-    if len(text.strip()) >= 50:
+    if len(text.strip()) >= 200:
         return text
 
     # Scanned PDF — OCR every page via Groq vision

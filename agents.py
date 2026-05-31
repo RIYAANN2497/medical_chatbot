@@ -42,7 +42,6 @@ def _invoke(prompt_template: str, variables: dict, max_tokens: int = 800) -> str
     chain = pt | _llm(max_tokens) | StrOutputParser()
     return chain.invoke(variables)
 
-
 def _get_context(retriever, query: str, max_chars: int = 10_000) -> str:
     """Retrieve relevant chunks and join them, capped at max_chars."""
     docs = retriever.invoke(query)
@@ -55,6 +54,16 @@ def _get_context(retriever, query: str, max_chars: int = 10_000) -> str:
         parts.append(chunk)
         total += len(chunk)
     return "\n\n".join(parts)
+    
+def _require_context(retriever, query: str, agent_name: str) -> str | None:
+    """Returns context string, or None if nothing was retrieved."""
+    context = _get_context(retriever, query)
+    if not context.strip():
+        return None
+    return context
+
+
+
 
 
 # ── 1. Summarizer Agent ───────────────────────────────────────────────────────
@@ -100,9 +109,9 @@ Summary:
 """
 
     def run(self, retriever, summaries: dict | None = None, **_) -> str:
-        context = _get_context(retriever, "patient diagnosis findings recommendations medications")
-        if not context.strip():
-            return "⚠️ No document content found. Please upload and process your documents first."
+        context = _require_context(retriever, "patient diagnosis findings recommendations medications", self.NAME)
+        if context is None:
+            return "⚠️ No document content found. Please upload your documents first."
         result = _invoke(self.PROMPT, {"context": context}, max_tokens=1000)
         return result
 
@@ -138,11 +147,12 @@ Analysis:
 """
 
     def run(self, retriever, **_) -> str:
-        context = _get_context(
+        context = _require_context(
             retriever,
             "lab results blood test urine creatinine glucose hemoglobin CBC LFT KFT vitals",
+            self.NAME,
         )
-        if not context.strip():
+        if context is None:
             return "⚠️ No lab results found in the uploaded documents."
         return _invoke(self.PROMPT, {"context": context}, max_tokens=1200)
 
@@ -182,11 +192,12 @@ Medications:
 """
 
     def run(self, retriever, **_) -> str:
-        context = _get_context(
+        context = _require_context(
             retriever,
             "medication prescription tablet capsule dose mg ml twice daily morning tablet drug",
+            self.NAME,
         )
-        if not context.strip():
+        if context is None:
             return "⚠️ No document content found. Please upload your documents first."
         return _invoke(self.PROMPT, {"context": context}, max_tokens=1000)
 
@@ -232,11 +243,12 @@ Appointments and Reminders:
 """
 
     def run(self, retriever, **_) -> str:
-        context = _get_context(
+        context = _require_context(
             retriever,
             "appointment follow-up date review next visit schedule test repeat",
+            self.NAME,
         )
-        if not context.strip():
+        if context is None:
             return "⚠️ No document content found. Please upload your documents first."
         return _invoke(self.PROMPT, {"context": context}, max_tokens=800)
 
@@ -299,11 +311,12 @@ Email:
         recipient_email: str = "",
         **_,
     ) -> str:
-        context = _get_context(
+        context = _require_context(
             retriever,
             "diagnosis findings lab results medications recommendations follow-up",
+            self.NAME,
         )
-        if not context.strip():
+        if context is None:
             return "⚠️ No document content found. Please upload your documents first."
 
         whom_map = {"me": "Myself", "parent": "My parent", "child": "My child", "other": "Friend/Other"}
@@ -323,8 +336,9 @@ Email:
         subject = "Medical Report Summary — MediChat"
         body_lines = lines
         for i, line in enumerate(lines):
-            if line.lower().startswith("subject:"):
-                subject = line[8:].strip()
+            clean_line = line.replace("**", "").replace("*", "").strip()
+            if clean_line.lower().startswith("subject:"):
+                subject = clean_line[8:].strip()
                 body_lines = lines[i + 1:]
                 break
         body = "\n".join(body_lines).strip()

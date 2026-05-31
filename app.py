@@ -859,6 +859,7 @@ if st.session_state.get("processing"):
             if os.path.exists(path): os.unlink(path)
     st.session_state.processing = False
     st.session_state.files_to_process = []
+    st.session_state.docs_just_processed = True
     st.rerun()
 
 
@@ -1070,7 +1071,8 @@ with main_col:
                     skip_prefixes = ("**to:", "**subject:", "**📧 draft", "---", "_to send")
                     found_body = False
                     for line in lines:
-                        if line.strip().lower().startswith(skip_prefixes):
+                        clean = line.replace("**", "").replace("*", "").strip()
+                        if clean.lower().startswith(skip_prefixes):
                             continue
                         if line.strip():
                             found_body = True
@@ -1180,34 +1182,35 @@ with main_col:
                     st.rerun()
 
             if st.session_state.get("run_all_triggered"):
-                email_agent = "📧 Email Report"
-                for aname in orchestrator.agent_names:
-                    status = st.session_state.agent_statuses.get(aname, "")
-                    if status == "pending":
-                        # Email agent — just generate the draft, don't require SMTP upfront
-                        if aname == email_agent:
-                            pass  # run it like any other agent
-                        st.session_state.agent_statuses[aname] = "running"
-                        with st.spinner(f"⏳ Running {aname}..."):
-                            try:
-                                res = orchestrator.run(
-                                    agent_name=aname,
-                                    retriever=st.session_state.retriever,
-                                    user_name=st.session_state.user_name,
-                                    mood=st.session_state.user_mood,
-                                    user_whom=st.session_state.user_whom,
-                                    user_age=st.session_state.user_age,
-                                    user_conditions=st.session_state.user_conditions,
-                                    summaries=st.session_state.summaries,
-                                    smtp_config=st.session_state.get("smtp_config"),
-                                    recipient_email=st.session_state.get("recipient_email", ""),
-                                )
-                                st.session_state.all_agents_results[aname] = res
-                                st.session_state.agent_statuses[aname] = "done"
-                            except Exception as e:
-                                st.session_state.all_agents_results[aname] = f"❌ Error: {e}"
-                                st.session_state.agent_statuses[aname] = "done"
-                        st.rerun()
+                any_pending = any(
+                    st.session_state.agent_statuses.get(a) == "pending"
+                    for a in orchestrator.agent_names
+                )
+                if any_pending:
+                    with st.spinner("⏳ Running all agents…"):
+                        for aname in orchestrator.agent_names:
+                            if st.session_state.agent_statuses.get(aname) == "pending":
+                                st.session_state.agent_statuses[aname] = "running"
+                                try:
+                                    res = orchestrator.run(
+                                        agent_name=aname,
+                                        retriever=st.session_state.retriever,
+                                        user_name=st.session_state.user_name,
+                                        mood=st.session_state.user_mood,
+                                        user_whom=st.session_state.user_whom,
+                                        user_age=st.session_state.user_age,
+                                        user_conditions=st.session_state.user_conditions,
+                                        summaries=st.session_state.summaries,
+                                        smtp_config=st.session_state.get("smtp_config"),
+                                        recipient_email=st.session_state.get("recipient_email", ""),
+                                    )
+                                    st.session_state.all_agents_results[aname] = res
+                                    st.session_state.agent_statuses[aname] = "done"
+                                except Exception as e:
+                                    st.session_state.all_agents_results[aname] = f"❌ Error: {e}"
+                                    st.session_state.agent_statuses[aname] = "done"
+                    st.session_state.run_all_triggered = False
+                    st.rerun()
 
 
                 # All done
