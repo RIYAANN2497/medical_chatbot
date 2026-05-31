@@ -454,7 +454,7 @@ defaults = {
     "retriever": None,
     "chat_history": [],
     "uploaded_names": [],
-    "onboarding_done": True,
+    "onboarding_done": False,
     "chroma_dir": None,
     "summaries": {},
     "processing": False,
@@ -681,7 +681,7 @@ def show_onboarding():
 
 
 # ── ONBOARDING GATE (flicker-free) ───────────────────────────
-if not st.session_state.get("onboarding_done", True):
+if not st.session_state.get("onboarding_done", False):
     show_onboarding()
     st.stop()
 
