@@ -785,7 +785,26 @@ with st.sidebar:
         st.markdown("---")
         st.markdown('<p class="sidebar-section-label">Try asking</p>', unsafe_allow_html=True)
         for q in ["What does my creatinine level mean?","What medications were prescribed?","Is my blood sugar normal?","What was the diagnosis?","Which values are abnormal?","What follow-up is needed?"]:
-            st.markdown(f'<span class="chip">💬 {q}</span>', unsafe_allow_html=True)
+            if st.button(f"💬 {q}", key=f"chip_{q}", use_container_width=True):
+                st.session_state.active_tab = "chat"
+                history_before = list(st.session_state.chat_history)
+                st.session_state.chat_history.append({"role": "user", "content": q})
+                from qa_chain import get_answer
+                if st.session_state.llm:
+                    answer = get_answer(
+                        llm=st.session_state.llm,
+                        retriever=st.session_state.retriever,
+                        question=q,
+                        chat_history=history_before,
+                        mood=st.session_state.user_mood,
+                        user_name=st.session_state.user_name,
+                        user_conditions=st.session_state.user_conditions,
+                        user_whom=st.session_state.user_whom,
+                        user_age=st.session_state.user_age,
+                        summaries=st.session_state.get("summaries", {}),
+                    )
+                    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>For informational purposes only.<br/>Always consult your doctor.</p>", unsafe_allow_html=True)
@@ -832,7 +851,7 @@ if st.session_state.get("processing"):
         st.session_state.uploaded_names = original_names
         st.session_state.summaries = summaries
         st.session_state.chat_history = []
-        st.success("✅ Documents processed successfully!")
+        st.session_state.docs_just_processed = True
     except Exception as e:
         st.session_state.processing_error = str(e)
     finally:
@@ -1289,6 +1308,18 @@ with main_col:
                     st.markdown(f"**{doc_name}**")
                     st.markdown(summary)
                     st.markdown("---")
+
+        if st.session_state.get("docs_just_processed"):
+            st.markdown("""
+            <div style="text-align:center;margin:16px auto;padding:16px 24px;
+                background:#edfdf4;border-radius:16px;max-width:480px;
+                border:1px solid rgba(46,170,94,0.3);">
+                <p style="color:#1a8a4a;font-size:15px;font-weight:700;margin:0;">
+                    ✅ Documents ready! Ask me anything below.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            st.session_state.docs_just_processed = False
 
         # No docs uploaded yet
         if st.session_state.llm is None:
