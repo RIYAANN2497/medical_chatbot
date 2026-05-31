@@ -467,7 +467,6 @@ defaults = {
     "active_agent": None,
     "agent_result": None,
     "agent_running": False,
-    "smtp_config": None,
     "active_tab": "agents",
     "recipient_email": "",
 }
