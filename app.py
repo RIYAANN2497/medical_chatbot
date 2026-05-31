@@ -1068,13 +1068,19 @@ with main_col:
                     draft_body = st.session_state.agent_result
                     lines = draft_body.split("\n")
                     body_lines = []
-                    skip_prefixes = ("**to:", "**subject:", "**📧 draft", "---", "_to send")
+                    skip_prefixes = (
+                        "to:", "subject:", "📧 draft", "---", "_to send",
+                        "draft email ready", "no recipient", "family member",
+                    )
                     found_body = False
                     for line in lines:
                         clean = line.replace("**", "").replace("*", "").strip()
+                        if not clean:
+                            continue
                         if clean.lower().startswith(skip_prefixes):
                             continue
-                        if line.strip():
+                        # Start body only when we hit the salutation
+                        if clean.lower().startswith("dear"):
                             found_body = True
                         if found_body:
                             body_lines.append(line)
