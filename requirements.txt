@@ -13,3 +13,4 @@ python-docx
 groq
 fpdf2
 protobuf==3.20.3
+resend

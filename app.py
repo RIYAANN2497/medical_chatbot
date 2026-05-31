@@ -994,47 +994,6 @@ with main_col:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # SMTP config section
-                    st.markdown("""
-                    <div style="background:white;border:0.5px solid rgba(74,144,217,0.2);
-                        border-radius:16px;overflow:hidden;margin-bottom:20px;">
-                        <div style="padding:12px 18px;border-bottom:0.5px solid rgba(74,144,217,0.15);
-                            display:flex;align-items:center;gap:8px;background:#f8faff;">
-                            <span style="font-size:15px;">⚙️</span>
-                            <span style="font-size:13px;font-weight:700;color:#0d2b6e;">SMTP Configuration</span>
-                            <span style="font-size:11px;color:#5a7abf;margin-left:4px;">
-                                — use a Gmail <a href="https://myaccount.google.com/apppasswords"
-                                target="_blank" style="color:#2451b3;">app password</a>
-                            </span>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    smtp_col1, smtp_col2 = st.columns(2)
-                    with smtp_col1:
-                        sender_email = st.text_input(
-                            "Sender Gmail",
-                            value=os.getenv("SMTP_SENDER", ""),
-                            placeholder="yourname@gmail.com",
-                            key="email_sender_main",
-                        )
-                    with smtp_col2:
-                        app_password = st.text_input(
-                            "App Password",
-                            value=os.getenv("SMTP_PASSWORD", ""),
-                            type="password",
-                            placeholder="16-character app password",
-                            key="email_apppass_main",
-                        )
-
-                    if sender_email and app_password:
-                        st.session_state.smtp_config = {
-                            "sender_email": sender_email,
-                            "app_password": app_password,
-                        }
-                    else:
-                        st.session_state.smtp_config = None
-
                     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
                     # Gmail-style compose window
@@ -1094,7 +1053,7 @@ with main_col:
                     draft_body = st.session_state.agent_result
                     lines = draft_body.split("\n")
                     body_lines = []
-                    skip_prefixes = ("**📧", "**to:", "**subject:", "---", "_to send")
+                    skip_prefixes = ("**to:", "**subject:", "**📧 draft", "---", "_to send")
                     found_body = False
                     for line in lines:
                         if line.strip().lower().startswith(skip_prefixes):
