@@ -62,7 +62,74 @@ def _render_message(raw: str) -> str:
         parts.append("</ul>")
     return "".join(parts)
 
+# ── Appointment renderer ──────────────────────────────────────
+def _render_appointment(raw: str):
+    import re as re2
+    sections = re2.split(r'\n(?=\*\*[📅🧪💊💡])', raw.strip())
+    colors_map = {
+        "📅": ("#eef3ff", "#2451b3", "#dce8ff"),
+        "🧪": ("#f0fff4", "#1a8a4a", "#c6f0d8"),
+        "💊": ("#fff8f0", "#c06000", "#ffe0b2"),
+        "💡": ("#f5f0ff", "#6a3db8", "#e2d4f8"),
+    }
+    for section in sections:
+        section = section.strip()
+        if not section:
+            continue
+        emoji = next((c for c in section[:5] if c in colors_map), "📅")
+        bg, accent, border = colors_map.get(emoji, ("#f8f9ff", "#2451b3", "#dce8ff"))
+        lines = section.split("\n")
+        title_raw = lines[0].strip().strip("*").strip()
+        body_lines = lines[1:]
 
+        items_html = ""
+        current_appt = {}
+        appt_blocks = []
+
+        for line in body_lines:
+            s = line.strip()
+            if not s or s == "---":
+                if current_appt:
+                    appt_blocks.append(current_appt)
+                    current_appt = {}
+                continue
+            bold_date = re2.match(r'^\*\*(.+)\*\*$', s)
+            if bold_date:
+                if current_appt:
+                    appt_blocks.append(current_appt)
+                current_appt = {"date": bold_date.group(1), "details": []}
+            elif s.startswith("- ") and current_appt:
+                current_appt["details"].append(s[2:])
+            elif s.startswith("- "):
+                items_html += f"<div style='display:flex;gap:8px;margin:6px 0;'><span style='color:{accent};font-weight:700;'>•</span><span style='color:#1a1a2e;font-size:14px;'>{html.escape(s[2:])}</span></div>"
+
+        if current_appt:
+            appt_blocks.append(current_appt)
+
+        for appt in appt_blocks:
+            details_html = ""
+            for d in appt.get("details", []):
+                key, _, val = d.partition(":")
+                if val:
+                    details_html += f"<div style='font-size:13px;color:#555;margin:3px 0;'><span style='font-weight:700;color:{accent};'>{html.escape(key.strip())}:</span> {html.escape(val.strip())}</div>"
+                else:
+                    details_html += f"<div style='font-size:13px;color:#555;margin:3px 0;'>{html.escape(d)}</div>"
+            items_html += f"""
+            <div style='background:white;border-radius:12px;padding:12px 16px;margin:8px 0;
+                border-left:4px solid {accent};box-shadow:0 2px 8px rgba(0,0,0,0.06);'>
+                <div style='font-size:14px;font-weight:800;color:{accent};margin-bottom:6px;'>📅 {html.escape(appt["date"])}</div>
+                {details_html}
+            </div>"""
+
+        st.markdown(f"""
+        <div style='background:{bg};border:1.5px solid {border};border-radius:20px;
+            padding:20px 24px;margin:12px 0;'>
+            <div style='font-size:16px;font-weight:800;color:{accent};margin-bottom:12px;
+                padding-bottom:8px;border-bottom:1.5px solid {border};'>{html.escape(title_raw)}</div>
+            {items_html}
+        </div>
+        """, unsafe_allow_html=True)
+        
 # ── Page config ───────────────────────────────────────────────
 st.set_page_config(
     page_title="MediChat — Your Medical Assistant",
@@ -1168,7 +1235,10 @@ with main_col:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    st.markdown(st.session_state.agent_result)
+                    if agent_name == "📅 Appointment Reminder":
+                        _render_appointment(st.session_state.agent_result)
+                    else:
+                        st.markdown(st.session_state.agent_result)
                     st.markdown("<br>", unsafe_allow_html=True)
 
                     c1, c2, c3 = st.columns([1, 1, 1])
