@@ -97,6 +97,9 @@ What the doctor concluded, in plain language.
 **📋 Recommendations**
 - What the doctor recommends, one bullet per point
 
+**💊 Medications Prescribed**
+List each medication with dosage and frequency in one line each. If none, write "No medications in this document."
+
 **📄 Documents Covered**
 - List document names
 
