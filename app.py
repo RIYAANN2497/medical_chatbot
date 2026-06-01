@@ -25,6 +25,10 @@ def _render_message(raw: str) -> str:
         ordered_match = _re.match(r"^(\d+)\.\s+(.*)", s)
         is_unordered = s.startswith("- ") or s.startswith("* ")
         is_bullet = is_unordered or bool(ordered_match)
+        is_h2 = s.startswith("## ")
+        is_h3 = s.startswith("### ")
+        is_bold_header = _re.match(r"^\*\*(.+)\*\*$", s) and not is_bullet
+
         if is_bullet:
             if not in_list:
                 parts.append("<ul style='margin:6px 0 6px 0;padding-left:20px;list-style:disc;'>")
@@ -41,7 +45,17 @@ def _render_message(raw: str) -> str:
             if in_list:
                 parts.append("</ul>")
                 in_list = False
-            if s:
+            if is_h2:
+                text = html.escape(s[3:])
+                parts.append(f"<p style='font-size:15px;font-weight:800;color:#0d2b6e;margin:14px 0 4px;'>{text}</p>")
+            elif is_h3:
+                text = html.escape(s[4:])
+                parts.append(f"<p style='font-size:14px;font-weight:700;color:#2451b3;margin:10px 0 4px;'>{text}</p>")
+            elif is_bold_header:
+                text = _re.sub(r"^\*\*(.+)\*\*$", r"\1", s)
+                text = html.escape(text)
+                parts.append(f"<p style='font-size:14px;font-weight:800;color:#0d2b6e;margin:14px 0 4px;border-left:3px solid #4a90d9;padding-left:8px;'>{text}</p>")
+            elif s:
                 text = _re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(s))
                 parts.append(f"<p style='margin:3px 0;'>{text}</p>")
     if in_list:
@@ -469,6 +483,7 @@ defaults = {
     "agent_running": False,
     "active_tab": "agents",
     "recipient_email": "",
+    "docs_just_processed": False,
 }
 
 for k, v in defaults.items():
