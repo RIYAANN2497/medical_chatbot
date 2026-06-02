@@ -259,21 +259,33 @@ def get_answer(
     """
     summary_triggers = ["summarise", "summarize", "summary", "overview", "what is this report", "what does this report say", "what's in my report"]
     if summaries and any(t in question.lower() for t in summary_triggers):
-        # Instead of dumping the raw summary, pass it through the LLM
-        # so it sounds like a friend explaining it naturally
-        raw_summary = "\n\n".join(f"**{name}**\n{s}" for name, s in summaries.items())
+        raw_summary = "\n\n".join(s for s in summaries.values())
         tone = EMOTION_TONES.get(mood, DEFAULT_TONE)
         name = _sanitise_name(user_name)
-        user_ctx_block = build_user_context_block(name, user_whom, user_age, user_conditions or [])
 
-        chain = MEDICAL_PROMPT | llm | StrOutputParser()
+        summary_prompt = PromptTemplate.from_template("""
+    You are MediChat, a warm friendly medical buddy.
+
+    {tone_instruction}
+
+    The patient wants a summary of their report. Talk to them like a caring friend — casual, warm, plain English paragraphs. 
+    Absolutely NO bullet points, NO headers, NO tables, NO bold text, NO markdown formatting of any kind.
+    Just natural flowing sentences like you're explaining it over coffee.
+    Keep it under 200 words. Be conversational and warm throughout.
+    End with a gentle follow-up question.
+
+    Patient name: {user_name}
+
+    Report content:
+    {context}
+
+    Summary (plain conversational text only, zero formatting):""")
+
+        chain = summary_prompt | llm | StrOutputParser()
         return chain.invoke({
             "context": raw_summary,
-            "question": "Give me a summary of my report. Walk me through everything important — what's normal, what's not, and what I should know.",
-            "chat_history": format_chat_history(chat_history),
             "tone_instruction": tone,
             "user_name": name,
-            "user_context_block": user_ctx_block,
         })
 
     if user_conditions is None:
