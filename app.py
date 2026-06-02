@@ -947,6 +947,21 @@ with st.sidebar:
                     st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
 
+    st.markdown("---")
+    st.markdown('<p class="sidebar-section-label">🌐 Language</p>', unsafe_allow_html=True)
+    languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Kannada", "Malayalam"]
+    current_lang = st.session_state.get("user_language", "English")
+    selected_lang = st.selectbox(
+        "Language",
+        options=languages,
+        index=languages.index(current_lang) if current_lang in languages else 0,
+        label_visibility="collapsed",
+        key="sidebar_language_selector",
+    )
+    if selected_lang != current_lang:
+        st.session_state.user_language = selected_lang
+        st.rerun()
+
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>For informational purposes only.<br/>Always consult your doctor.</p>", unsafe_allow_html=True)
 
