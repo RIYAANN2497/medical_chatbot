@@ -783,18 +783,10 @@ def show_onboarding():
 
         # Language picker
         st.markdown('<p style="font-size:13px;font-weight:600;color:#6a7ab5;margin:16px 0 8px;">🌐 Preferred Language</p>', unsafe_allow_html=True)
-        languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Kannada", "Malayalam"]
-        lang_cols1 = st.columns(4)
-        for i, lang in enumerate(languages[:4]):
+        languages = ["English", "Hindi", "Malayalam"]
+        lang_cols1 = st.columns(3)
+        for i, lang in enumerate(languages):
             with lang_cols1[i]:
-                selected = st.session_state.user_language == lang
-                if st.button(lang, key=f"lang_{lang}", use_container_width=True,
-                             type="primary" if selected else "secondary"):
-                    st.session_state.user_language = lang
-                    st.rerun()
-        lang_cols2 = st.columns(4)
-        for i, lang in enumerate(languages[4:]):
-            with lang_cols2[i]:
                 selected = st.session_state.user_language == lang
                 if st.button(lang, key=f"lang_{lang}", use_container_width=True,
                              type="primary" if selected else "secondary"):
@@ -968,7 +960,7 @@ with st.sidebar:
     </style>
     """, unsafe_allow_html=True)
 
-    languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Kannada", "Malayalam"]
+    languages = ["English", "Hindi", "Malayalam"]
     current_lang = st.session_state.get("user_language", "English")
     current_index = languages.index(current_lang) if current_lang in languages else 0
 
@@ -979,7 +971,18 @@ with st.sidebar:
         label_visibility="collapsed",
         key="sidebar_lang",
     )
-    st.session_state.user_language = selected_lang
+    if selected_lang != st.session_state.get("user_language", "English"):
+        st.session_state.user_language = selected_lang
+        from langchain_groq import ChatGroq
+        from langchain_core.output_parsers import StrOutputParser
+        _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+        ack = (_llm | StrOutputParser()).invoke(
+            f"In {selected_lang} only, write one short warm sentence (max 12 words) saying you'll now respond in {selected_lang}. Keep emojis."
+        )
+        st.session_state.chat_history.append({"role": "assistant", "content": ack})
+        st.rerun()
+    else:
+        st.session_state.user_language = selected_lang
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>For informational purposes only.<br/>Always consult your doctor.</p>", unsafe_allow_html=True)

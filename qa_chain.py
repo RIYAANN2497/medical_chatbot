@@ -283,7 +283,12 @@ def get_answer(
     Summary (plain conversational text only, zero formatting):""")
 
         if user_language != "English":
-            tone = tone + f" IMPORTANT: Respond entirely in {user_language}. Keep test names and numbers in English."
+            tone = tone + (
+                f" IMPORTANT: The user may type in English or romanized {user_language} — always understand their intent."
+                f" Always respond entirely in {user_language} script."
+                f" Keep medical test names and numbers in English."
+                f" Never respond in English even if the user writes in English — always reply in {user_language}."
+            )
 
         chain = summary_prompt | llm | StrOutputParser()
         return chain.invoke({
@@ -351,7 +356,12 @@ def get_answer(
     user_ctx_block = build_user_context_block(name, user_whom, user_age, user_conditions)
 
     if user_language != "English":
-        tone = tone + f" IMPORTANT: Respond entirely in {user_language}. Keep test names, medication names, and numbers in English."
+        tone = tone + (
+            f" IMPORTANT: The user may type in English, Hinglish, or romanized {user_language} — always understand their intent regardless of how they type."
+            f" Always respond entirely in {user_language} script (Hindi = Devanagari, Malayalam = Malayalam script)."
+            f" Keep medical test names, medication names, and numbers in English."
+            f" Never respond in English even if the user writes in English — always reply in {user_language}."
+        )
 
     chain = MEDICAL_PROMPT | llm | StrOutputParser()
 
