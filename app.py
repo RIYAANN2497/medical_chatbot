@@ -18,46 +18,42 @@ import re as _re
 
 # ── Markdown → safe HTML renderer ────────────────────────────
 def _render_message(raw: str) -> str:
+    import re as _re2
     parts = []
     in_list = False
     for line in raw.split("\n"):
         s = line.strip()
-        ordered_match = _re.match(r"^(\d+)\.\s+(.*)", s)
-        is_unordered = s.startswith("- ") or s.startswith("* ")
-        is_bullet = is_unordered or bool(ordered_match)
-        is_h2 = s.startswith("## ")
-        is_h3 = s.startswith("### ")
-        is_bold_header = _re.match(r"^\*\*(.+)\*\*$", s) and not is_bullet
-
+        if not s:
+            if in_list:
+                parts.append("</ul>")
+                in_list = False
+            continue
+        
+        is_bullet = s.startswith("- ") or s.startswith("* ") or bool(_re2.match(r"^\d+\.\s", s))
+        
         if is_bullet:
             if not in_list:
-                parts.append("<ul style='margin:6px 0 6px 0;padding-left:20px;list-style:disc;'>")
+                parts.append("<ul style='margin:6px 0;padding-left:20px;list-style:disc;'>")
                 in_list = True
-            if ordered_match:
-                num, text_raw = ordered_match.group(1), ordered_match.group(2)
-                text = _re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(text_raw))
-                parts.append(f"<li style='margin-bottom:5px;'>{num}. {text}</li>")
-            else:
-                text_raw = _re.sub(r"^[-*]\s", "", s)
-                text = _re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(text_raw))
-                parts.append(f"<li style='margin-bottom:5px;'>{text}</li>")
+            text_raw = _re2.sub(r"^[-*]\s|^\d+\.\s", "", s)
+            text = _re2.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(text_raw))
+            parts.append(f"<li style='margin-bottom:5px;'>{text}</li>")
         else:
             if in_list:
                 parts.append("</ul>")
                 in_list = False
-            if is_h2:
+            # Only style ## and ### headers — don't style **bold** lines as headers
+            if s.startswith("## "):
                 text = html.escape(s[3:])
                 parts.append(f"<p style='font-size:15px;font-weight:800;color:#0d2b6e;margin:14px 0 4px;'>{text}</p>")
-            elif is_h3:
+            elif s.startswith("### "):
                 text = html.escape(s[4:])
                 parts.append(f"<p style='font-size:14px;font-weight:700;color:#2451b3;margin:10px 0 4px;'>{text}</p>")
-            elif is_bold_header:
-                text = _re.sub(r"^\*\*(.+)\*\*$", r"\1", s)
-                text = html.escape(text)
-                parts.append(f"<p style='font-size:14px;font-weight:800;color:#0d2b6e;margin:14px 0 4px;border-left:3px solid #4a90d9;padding-left:8px;'>{text}</p>")
-            elif s:
-                text = _re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(s))
-                parts.append(f"<p style='margin:3px 0;'>{text}</p>")
+            else:
+                # Render inline bold but keep it as a normal paragraph
+                text = _re2.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(s))
+                parts.append(f"<p style='margin:3px 0;line-height:1.7;'>{text}</p>")
+    
     if in_list:
         parts.append("</ul>")
     return "".join(parts)
@@ -617,24 +613,44 @@ def build_pdf_export(chat_history, user_name, user_mood, user_conditions):
         print(f"[pdf_export] Error: {e}"); return None
 
 
-# ── Welcome message ───────────────────────────────────────────
 def _set_welcome_message():
     st.session_state.pop("ob_step", None)
     name = st.session_state.user_name or "there"
     mood = st.session_state.user_mood
     mood_responses = {
-        "Anxious":   f"Hey {name}, I can see this might feel a little nerve-wracking — that's completely okay. I'm here to help you understand your documents step by step, calmly and clearly. 💙",
-        "Sad":       f"Hi {name}. I'm really glad you're here. Medical stuff can feel heavy sometimes — I'll do my best to explain everything gently and clearly. You're not alone in this. 🤍",
-        "Irritable": f"Hey {name}. No fluff — just clear, direct answers. Upload your docs and let's get to it.",
-        "Tired":     f"Hi {name}, I'll keep things short and simple. Upload your documents and ask me anything — I'll make it easy to follow. 🌙",
-        "Happy":     f"Hey {name}! Great to have you here 😊 Upload your medical documents and I'll help you make sense of everything. Let's go!",
-        "Relieved":  f"Hi {name}, so glad you're feeling a bit better! Let's look through your documents together — one step at a time. 🌿",
-        "Patient":   f"Hi {name}, I appreciate your patience. Upload your documents whenever you're ready and I'll walk through everything clearly with you. 🏥",
-        "Strong":    f"Hi {name}! Ready to dive in? Upload your documents and I'll give you a thorough, detailed breakdown of everything in them.",
-        "Unwell":    f"Hi {name}, hope you're hanging in there. I'll keep my answers gentle and clear — just upload your documents and ask anything. Take it easy. 💛",
-        "Calm":      f"Hi {name}! Great to meet you. Upload your medical documents whenever you're ready and we'll walk through them together.",
-        "Confused":  f"Hey {name}! Don't worry — I'll explain everything in plain, simple language. No jargon, no confusion. Just upload your documents and ask away! 😊",
-        "Neutral":   f"Hi {name}! Upload your medical documents and ask me anything — I'll explain everything clearly and simply.",
+        "Anxious":   f"Hey {name} 💙 I know medical stuff can feel stressful — totally get it. I'm here to make it way less scary, promise. Go ahead and drop your reports in the sidebar whenever you're ready, and I'll walk you through everything calmly. What's on your mind?",
+        "Sad":       f"Hey {name} 🤍 I'm really glad you came here. Medical reports can feel overwhelming, but you don't have to figure it all out alone. Upload your docs when you're ready and we'll go through them together, nice and easy. How are you holding up?",
+        "Irritable": f"Hey {name}. I'll keep it short and useful — no fluff. Drop your docs in the sidebar and ask me whatever you need. What do you want to know?",
+        "Tired":     f"Hey {name} 🌙 I'll keep things super simple for you. Just upload your reports on the left and I'll break everything down — no long explanations, just the stuff that matters. What would you like to start with?",
+        "Happy":     f"Hey {name}! 😊 Love the energy — let's get into it! Drop your medical docs in the sidebar and I'll help you make sense of everything. What are you curious about?",
+        "Relieved":  f"Hey {name} 🌿 Glad you're feeling a bit lighter! Upload your reports whenever you're ready and we'll go through them together. Anything specific you want to check on?",
+        "Patient":   f"Hey {name} 🏥 Thanks for being here. Whenever you're ready, upload your documents on the left and I'll walk you through everything step by step. Where would you like to start?",
+        "Strong":    f"Hey {name}! 💪 Alright, let's do this. Drop your reports in the sidebar and I'll give you a solid breakdown. What do you want to dive into first?",
+        "Unwell":    f"Hey {name} 💛 Hope you're hanging in there. Take your time — upload your docs when you're ready and I'll explain everything gently. No rush at all. How are you feeling right now?",
+        "Calm":      f"Hey {name} 😊 Good to meet you! Upload your medical documents on the left whenever you're ready and we'll go through them together. What would you like to know?",
+        "Confused":  f"Hey {name}! 😊 Don't worry at all — that's literally why I'm here. I'll explain everything in plain, simple words. Just upload your reports on the left and ask me anything. What's confusing you the most?",
+        "Neutral":   f"Hey {name}! 👋 I'm here to help you make sense of your medical reports. Just upload your docs in the sidebar and ask me anything — I'll keep it simple and clear. What can I help you with?",
+    }
+    st.session_state.chat_history = [{"role": "assistant", "content": mood_responses.get(mood, mood_responses["Neutral"])}]
+
+
+def _set_docs_ready_message():
+    """Called after documents are processed — the bot leads by offering to walk through them."""
+    name = st.session_state.user_name or "there"
+    mood = st.session_state.user_mood
+    mood_responses = {
+        "Anxious":   f"Alright {name}, I've gone through your reports 💙 Everything's loaded up and ready. Want me to walk you through what I found, or is there something specific you want to ask about first?",
+        "Sad":       f"Okay {name}, I've read through everything 🤍 Your reports are all loaded up. I can give you a gentle walkthrough, or if you'd rather just ask about something specific — totally up to you. What feels right?",
+        "Irritable": f"Done — your docs are processed. I can give you a quick summary or you can jump straight to questions. What do you need?",
+        "Tired":     f"All set, {name} 🌙 Your reports are loaded. Want me to give you a quick rundown of the main things, or do you have a specific question? I'll keep it short either way.",
+        "Happy":     f"Awesome, {name}! 🎉 I've gone through all your documents. Want me to walk you through what I found, or do you wanna jump straight to questions?",
+        "Relieved":  f"All done, {name} 🌿 Your reports are loaded and ready. Want me to give you an overview, or is there something specific on your mind?",
+        "Patient":   f"Alright {name}, everything's processed and ready 🏥 I can walk you through the full picture step by step, or you can ask about specific things. What works for you?",
+        "Strong":    f"All loaded up, {name} 💪 Your reports are ready to go. Want the full breakdown or do you want to dive into specifics?",
+        "Unwell":    f"Okay {name}, your docs are all set 💛 No rush — whenever you're ready, I can walk you through what's in there, or you can ask me anything. What would help most right now?",
+        "Calm":      f"All set, {name} 😊 I've gone through your reports. I can give you an overview or we can go question by question — what do you prefer?",
+        "Confused":  f"Okay {name}, good news — I've read through everything! 😊 Want me to explain what's in your reports in simple words? Or if you have a specific question, just ask — no question is too basic, I promise.",
+        "Neutral":   f"All set, {name}! 👋 I've gone through your reports and everything's loaded up. Want me to give you an overview, or do you have something specific you want to ask about?",
     }
     st.session_state.chat_history = [{"role": "assistant", "content": mood_responses.get(mood, mood_responses["Neutral"])}]
 
@@ -884,6 +900,8 @@ with st.sidebar:
                         user_whom=st.session_state.user_whom,
                         user_age=st.session_state.user_age,
                         summaries=st.session_state.get("summaries", {}),
+                        
+
                     )
                     st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
@@ -932,7 +950,7 @@ if st.session_state.get("processing"):
         st.session_state.chroma_dir = chroma_dir
         st.session_state.uploaded_names = original_names
         st.session_state.summaries = summaries
-        st.session_state.chat_history = []
+        _set_docs_ready_message()
         st.session_state.docs_just_processed = True
     except Exception as e:
         st.session_state.processing_error = str(e)
@@ -1395,13 +1413,6 @@ with main_col:
                     unsafe_allow_html=True,
                 )
 
-        # Document summaries expander
-        if st.session_state.get("summaries"):
-            with st.expander("📋 Document Summaries", expanded=False):
-                for doc_name, summary in st.session_state.summaries.items():
-                    st.markdown(f"**{doc_name}**")
-                    st.markdown(summary)
-                    st.markdown("---")
 
         if st.session_state.get("docs_just_processed"):
             st.markdown("""
@@ -1449,6 +1460,7 @@ with main_col:
                             user_whom=st.session_state.user_whom,
                             user_age=st.session_state.user_age,
                             summaries=st.session_state.get("summaries", {}),
+                            
                         )
                     except Exception as e:
                         answer = f"Something went wrong while reading your documents. Please try again. (Error: {e})"

@@ -217,27 +217,34 @@ class AppointmentAgent:
 You are MediChat's Appointment Agent. Extract every date, follow-up instruction, and appointment
 mentioned in the document below.
 
-Format your output as:
+Format your output EXACTLY like this — clean, spaced out, easy to read:
 
-**Upcoming / Recommended Appointments**
-For each one:
-📅 [Date or timeframe] — [Type of appointment / test]
-   → Reason: [why this is needed, in plain language]
-   → Bring: [what to bring if mentioned — reports, empty stomach, etc.]
+**📅 Upcoming Appointments**
 
-**Tests / Investigations Ordered**
-List any tests the doctor has ordered that haven't been done yet.
+For each appointment, format it like this:
+**[Date or timeframe]**
+- Type: [what kind of appointment]
+- Why: [reason in one plain sentence]
+- Bring: [what to bring]
 
-**Repeat Medications / Refills**
-Note any medication refill dates or pharmacy instructions.
+---
 
-**Reminder Tips**
-- Save these dates in your phone's calendar
-- Bring all previous reports to follow-up visits
-- Fast for blood tests unless told otherwise
+**🧪 Tests Ordered**
+- [Test name] — [when it should be done]
 
-If no dates are found, state that no specific appointments were mentioned
-and list any general follow-up recommendations instead.
+---
+
+**💊 Medication Refills**
+- [Medication] — [refill date or duration if mentioned]
+
+---
+
+**💡 Reminders**
+- Save all dates in your phone calendar
+- Bring previous reports to every visit
+- Fast before blood tests unless told otherwise
+
+If no dates are found, list any general follow-up recommendations instead.
 
 Document content:
 {context}

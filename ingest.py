@@ -37,37 +37,21 @@ def summarise_document(chunks: list[str], doc_name: str) -> str:
     else:
         selected = chunks[:3] + chunks[-3:]
     sample = "\n\n".join(selected)[:3000]
-    prompt = f"""You are MediChat, a warm medical assistant. Summarise this medical document clearly and in a structured way.
+
+    prompt = f"""You are MediChat, a warm friendly medical buddy talking to a patient.
+
+The patient just uploaded their report and wants to understand it. Talk to them like a caring friend explaining over coffee — casual, warm, plain English. No bullet points, no headers, no tables, no bold text, no formatting at all. Just natural flowing paragraphs like a real conversation.
+
+Keep it under 150 words. Mention what the report is about, the key findings in simple words, anything that needs attention, and end with a warm note.
 
 Document: {doc_name}
 
-Format your response EXACTLY like this:
-
-**👤 Patient Details**
-Name, age, gender, referring doctor if mentioned.
-
-**🔍 Key Findings**
-- Bullet each important finding in one plain-language sentence
-
-**🔴 Abnormal Values**
-Present as a markdown table:
-| Test | Value | Normal Range | What it means |
-|------|-------|--------------|---------------|
-Only include abnormal values. Explain each in simple words.
-
-**🩺 Diagnosis / Impression**
-What the doctor concluded, in plain language.
-
-**📋 Recommendations**
-- What the doctor recommends, one bullet per point
-
-Keep it warm, clear, and jargon-free. Define any medical term in brackets right after using it.
-
-Content:
+Report content:
 {sample}
 
-Summary:"""
-    llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+Explanation (plain conversational paragraphs only, no formatting):"""
+
+    llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.3)
     return (llm | StrOutputParser()).invoke(prompt)
 
 
