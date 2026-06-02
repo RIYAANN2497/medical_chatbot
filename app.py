@@ -1040,6 +1040,7 @@ with main_col:
             "💊 Medication Agent":     ("💊", "#2eaa5e"),
             "📅 Appointment Reminder": ("📅", "#d97b4a"),
             "📧 Email Report":         ("📧", "#c72563"),
+            "🩻 Image Explainer":      ("🩻", "#0a9396"),  # ← add this
         }
         status_style = {
             "done":    ("✅ Done",      "#2eaa5e", "#edfdf4"),

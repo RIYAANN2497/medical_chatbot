@@ -20,6 +20,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 import resend
+from pathlib import Path
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -385,6 +386,49 @@ Email:
                 f"**Subject:** {subject}\n\n{body}"
             )
 
+# ── 6. Medical Image Explainer Agent ─────────────────────────
+
+class ImageExplainerAgent:
+    """Explains medical images (X-rays, scans) in simple language."""
+
+    NAME = "🩻 Image Explainer"
+    DESCRIPTION = "Upload an X-ray or scan and get a plain-language explanation."
+
+    def run(self, retriever, summaries: dict | None = None, **_) -> str:
+        # Use the stored summary/context from the image if it was uploaded
+        if summaries:
+            image_summaries = {
+                name: summary for name, summary in summaries.items()
+                if Path(name).suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+            }
+            if not image_summaries:
+                return "⚠️ No medical images found. Please upload an X-ray or scan (JPG, PNG, WEBP) and process it first."
+
+            results = []
+            for img_name, img_text in image_summaries.items():
+                prompt = f"""You are MediChat's Image Explainer. A patient has uploaded a medical image called "{img_name}".
+
+Below is the extracted content from that image. Your job is to explain it in two versions:
+
+**🧑 Patient Version**
+Write 3-4 casual, warm sentences a non-medical person can understand. No jargon. Use simple analogies. Be reassuring but honest. Don't diagnose — just explain what you see described.
+
+**👨‍⚕️ Doctor Version**
+Write a brief clinical summary in 3-4 sentences using proper medical terminology. Include findings, any notable observations, and suggest what follow-up might be relevant.
+
+**⚠️ Important Disclaimer**
+Always end with: "This is an AI-assisted explanation only. Always consult a qualified radiologist or doctor for an accurate diagnosis."
+
+Image content:
+{img_text}
+"""
+                result = _invoke(prompt, {}, max_tokens=800)
+                results.append(f"### {img_name}\n\n{result}")
+
+            return "\n\n---\n\n".join(results)
+
+        return "⚠️ No image content found. Please upload and process a medical image first."
+
 
 # ── Orchestrator ──────────────────────────────────────────────────────────────
 
@@ -400,6 +444,7 @@ class AgentOrchestrator:
         MedicationAgent,
         AppointmentAgent,
         EmailAgent,
+        ImageExplainerAgent,  # ← add this
     ]
 
     def __init__(self):
