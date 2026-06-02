@@ -949,22 +949,40 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown('<p class="sidebar-section-label">🌐 Language</p>', unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] > div > div {
+        background: rgba(255,255,255,0.12) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 10px !important;
+        color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] > div > div > div {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] svg {
+        display: block !important;
+        fill: #ffffff !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Kannada", "Malayalam"]
     current_lang = st.session_state.get("user_language", "English")
+    current_index = languages.index(current_lang) if current_lang in languages else 0
+
     selected_lang = st.selectbox(
         "Language",
         options=languages,
-        index=languages.index(current_lang) if current_lang in languages else 0,
+        index=current_index,
         label_visibility="collapsed",
-        key="sidebar_language_selector",
+        key="sidebar_lang",
     )
-    if selected_lang != current_lang:
-        st.session_state.user_language = selected_lang
-        st.rerun()
+    st.session_state.user_language = selected_lang
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>For informational purposes only.<br/>Always consult your doctor.</p>", unsafe_allow_html=True)
-
 
 # ── DOCUMENT PROCESSING (always runs before rendering) ───────
 if st.session_state.get("processing_error"):
