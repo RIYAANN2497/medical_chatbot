@@ -242,19 +242,13 @@ def ingest_multiple_files(
         )
 
     # Session-scoped directory prevents concurrent-user collisions
-    sub = session_id or str(uuid.uuid4())
-    chroma_dir = str(Path(CHROMA_BASE_DIR) / sub)
-
-    if os.path.exists(chroma_dir):
-        shutil.rmtree(chroma_dir)
-
-    embedding_model = get_embeddings()   # FIX 3: returns cached instance
-    print(f"[ingest] Embedding {len(all_chunks)} total chunks → {chroma_dir}")
+    embedding_model = get_embeddings()
+    print(f"[ingest] Embedding {len(all_chunks)} total chunks (in-memory)")
 
     vectorstore = Chroma.from_documents(
         documents=all_chunks,
         embedding=embedding_model,
-        persist_directory=chroma_dir,
+        # No persist_directory = stays in memory, works on Streamlit Cloud
     )
     print("[ingest] Done.")
-    return vectorstore, chroma_dir, summaries
+    return vectorstore, None, summaries

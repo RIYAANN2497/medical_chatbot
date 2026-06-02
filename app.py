@@ -943,6 +943,7 @@ if st.session_state.get("processing"):
     try:
         if st.session_state.chroma_dir and os.path.exists(st.session_state.chroma_dir):
             shutil.rmtree(st.session_state.chroma_dir, ignore_errors=True)
+        st.session_state.chroma_dir = None
         vectorstore, chroma_dir, summaries = ingest_multiple_files(tmp_paths, original_names, session_id=st.session_state.session_id)
         llm, retriever = build_qa_chain(vectorstore, mood=st.session_state.user_mood)
         st.session_state.llm = llm
@@ -951,7 +952,6 @@ if st.session_state.get("processing"):
         st.session_state.uploaded_names = original_names
         st.session_state.summaries = summaries
         _set_docs_ready_message()
-        st.session_state.docs_just_processed = True
     except Exception as e:
         st.session_state.processing_error = str(e)
     finally:
@@ -959,7 +959,6 @@ if st.session_state.get("processing"):
             if os.path.exists(path): os.unlink(path)
     st.session_state.processing = False
     st.session_state.files_to_process = []
-    st.session_state.docs_just_processed = True
     st.rerun()
 
 
@@ -1413,18 +1412,6 @@ with main_col:
                     unsafe_allow_html=True,
                 )
 
-
-        if st.session_state.get("docs_just_processed"):
-            st.markdown("""
-            <div style="text-align:center;margin:16px auto;padding:16px 24px;
-                background:#edfdf4;border-radius:16px;max-width:480px;
-                border:1px solid rgba(46,170,94,0.3);">
-                <p style="color:#1a8a4a;font-size:15px;font-weight:700;margin:0;">
-                    ✅ Documents ready! Ask me anything below.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            st.session_state.docs_just_processed = False
 
         # No docs uploaded yet
         if st.session_state.llm is None:
