@@ -547,6 +547,7 @@ defaults = {
     "active_tab": "agents",
     "recipient_email": "",
     "docs_just_processed": False,
+    "user_language": "English",  # ← new
 }
 
 for k, v in defaults.items():
@@ -632,6 +633,16 @@ def _set_welcome_message():
         "Neutral":   f"Hey {name}! 👋 I'm here to help you make sense of your medical reports. Just upload your docs in the sidebar and ask me anything — I'll keep it simple and clear. What can I help you with?",
     }
     st.session_state.chat_history = [{"role": "assistant", "content": mood_responses.get(mood, mood_responses["Neutral"])}]
+    lang = st.session_state.get("user_language", "English")
+    if lang != "English":
+        from langchain_groq import ChatGroq
+        from langchain_core.output_parsers import StrOutputParser
+        _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+        msg = st.session_state.chat_history[0]["content"]
+        translated = (_llm | StrOutputParser()).invoke(
+            f"Translate this exactly to {lang}, keep the same warm friendly tone, keep emojis: {msg}"
+        )
+        st.session_state.chat_history[0]["content"] = translated
 
 
 def _set_docs_ready_message():
@@ -653,6 +664,16 @@ def _set_docs_ready_message():
         "Neutral":   f"All set, {name}! 👋 I've gone through your reports and everything's loaded up. Want me to give you an overview, or do you have something specific you want to ask about?",
     }
     st.session_state.chat_history = [{"role": "assistant", "content": mood_responses.get(mood, mood_responses["Neutral"])}]
+    lang = st.session_state.get("user_language", "English")
+    if lang != "English":
+        from langchain_groq import ChatGroq
+        from langchain_core.output_parsers import StrOutputParser
+        _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+        msg = st.session_state.chat_history[0]["content"]
+        translated = (_llm | StrOutputParser()).invoke(
+            f"Translate this exactly to {lang}, keep the same warm friendly tone, keep emojis: {msg}"
+        )
+        st.session_state.chat_history[0]["content"] = translated
 
 
 # ── Onboarding dialog ─────────────────────────────────────────
@@ -759,6 +780,27 @@ def show_onboarding():
 
     elif step == 4:
         st.markdown('<div class="ob-label">Step 4 of 4</div><div class="ob-title">How are you feeling?</div><div class="ob-sub">We\'ll match our tone to how you feel right now</div>', unsafe_allow_html=True)
+
+        # Language picker
+        st.markdown('<p style="font-size:13px;font-weight:600;color:#6a7ab5;margin:16px 0 8px;">🌐 Preferred Language</p>', unsafe_allow_html=True)
+        languages = ["English", "Hindi", "Tamil", "Telugu", "Bengali", "Marathi", "Kannada", "Malayalam"]
+        lang_cols1 = st.columns(4)
+        for i, lang in enumerate(languages[:4]):
+            with lang_cols1[i]:
+                selected = st.session_state.user_language == lang
+                if st.button(lang, key=f"lang_{lang}", use_container_width=True,
+                             type="primary" if selected else "secondary"):
+                    st.session_state.user_language = lang
+                    st.rerun()
+        lang_cols2 = st.columns(4)
+        for i, lang in enumerate(languages[4:]):
+            with lang_cols2[i]:
+                selected = st.session_state.user_language == lang
+                if st.button(lang, key=f"lang_{lang}", use_container_width=True,
+                             type="primary" if selected else "secondary"):
+                    st.session_state.user_language = lang
+                    st.rerun()
+        st.markdown("<br>", unsafe_allow_html=True)
         all_moods = [("Happy","😊"),("Relieved","😌"),("Patient","🏥"),("Neutral","😐"),("Anxious","😟"),("Sad","😔"),("Tired","😴"),("Calm","🧘"),("Strong","💪"),("Unwell","🤒"),("Confused","😕"),("Irritable","😤")]
         current_mood = st.session_state.user_mood
         cols_per_row = 4
@@ -900,8 +942,7 @@ with st.sidebar:
                         user_whom=st.session_state.user_whom,
                         user_age=st.session_state.user_age,
                         summaries=st.session_state.get("summaries", {}),
-                        
-
+                        user_language=st.session_state.get("user_language", "English"),
                     )
                     st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
@@ -1448,7 +1489,7 @@ with main_col:
                             user_whom=st.session_state.user_whom,
                             user_age=st.session_state.user_age,
                             summaries=st.session_state.get("summaries", {}),
-                            
+                            user_language=st.session_state.get("user_language", "English"),
                         )
                     except Exception as e:
                         answer = f"Something went wrong while reading your documents. Please try again. (Error: {e})"

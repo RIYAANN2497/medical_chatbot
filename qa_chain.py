@@ -252,6 +252,7 @@ def get_answer(
     user_whom: str = "me",
     user_age: int = 30,
     summaries: dict = None,
+    user_language: str = "English",
 ) -> str:
     """
     chat_history should be passed BEFORE the new user message is appended.
@@ -280,6 +281,9 @@ def get_answer(
     {context}
 
     Summary (plain conversational text only, zero formatting):""")
+
+        if user_language != "English":
+            tone = tone + f" IMPORTANT: Respond entirely in {user_language}. Keep test names and numbers in English."
 
         chain = summary_prompt | llm | StrOutputParser()
         return chain.invoke({
@@ -345,6 +349,9 @@ def get_answer(
     tone = EMOTION_TONES.get(mood, DEFAULT_TONE)
     name           = _sanitise_name(user_name)
     user_ctx_block = build_user_context_block(name, user_whom, user_age, user_conditions)
+
+    if user_language != "English":
+        tone = tone + f" IMPORTANT: Respond entirely in {user_language}. Keep test names, medication names, and numbers in English."
 
     chain = MEDICAL_PROMPT | llm | StrOutputParser()
 
