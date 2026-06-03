@@ -403,9 +403,10 @@ _qp = st.query_params
 _pending = _qp.get("mc_msg", "")
 if _pending:
     st.query_params.clear()
-    if "pending_chat_msg" not in st.session_state:
-        st.session_state["pending_chat_msg"] = _pending
-
+    st.session_state["pending_chat_msg"] = _pending
+    st.session_state["onboarding_done"] = True
+    st.session_state["active_tab"] = "chat"
+    
 # ── Session state defaults ────────────────────────────────────
 defaults = {
     "run_all_triggered": False,
