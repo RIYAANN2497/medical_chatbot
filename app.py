@@ -1579,7 +1579,7 @@ with main_col:
                     </svg>
                   </button>
 
-                  <button class="btn" id="send" onclick="sendMsg()" disabled>
+                  <button class="btn" id="send" disabled>
                     <svg width="18" height="18" viewBox="0 0 24 24"
                         fill="none" stroke="#fff" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -1645,6 +1645,12 @@ with main_col:
                   }};
                   recog.start();
                 }}
+
+                sendBtn.addEventListener('click', function(e) {{
+                  e.preventDefault();
+                  e.stopPropagation();
+                  sendMsg();
+                }});
                 </script>
                 </body>
                 </html>
