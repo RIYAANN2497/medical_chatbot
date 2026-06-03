@@ -1614,7 +1614,11 @@ with main_col:
                   ta.value = '';
                   ta.style.height = 'auto';
                   sendBtn.disabled = true;
-                  window.parent.location.href = window.parent.location.pathname + '?mc_msg=' + encodeURIComponent(text);
+                  var frm=document.createElement('form');
+                  frm.method='GET';frm.target='_top';frm.action='';
+                  var inp=document.createElement('input');
+                  inp.type='hidden';inp.name='mc_msg';inp.value=text;
+                  frm.appendChild(inp);document.body.appendChild(frm);frm.submit();
                 }}
 
                 function toggleMic() {{
