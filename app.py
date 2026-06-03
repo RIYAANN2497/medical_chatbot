@@ -29,9 +29,9 @@ def _render_message(raw: str) -> str:
                 parts.append("</ul>")
                 in_list = False
             continue
-        
+
         is_bullet = s.startswith("- ") or s.startswith("* ") or bool(_re2.match(r"^\d+\.\s", s))
-        
+
         if is_bullet:
             if not in_list:
                 parts.append("<ul style='margin:6px 0;padding-left:20px;list-style:disc;'>")
@@ -43,7 +43,6 @@ def _render_message(raw: str) -> str:
             if in_list:
                 parts.append("</ul>")
                 in_list = False
-            # Only style ## and ### headers — don't style **bold** lines as headers
             if s.startswith("## "):
                 text = html.escape(s[3:])
                 parts.append(f"<p style='font-size:15px;font-weight:800;color:#0d2b6e;margin:14px 0 4px;'>{text}</p>")
@@ -51,13 +50,13 @@ def _render_message(raw: str) -> str:
                 text = html.escape(s[4:])
                 parts.append(f"<p style='font-size:14px;font-weight:700;color:#2451b3;margin:10px 0 4px;'>{text}</p>")
             else:
-                # Render inline bold but keep it as a normal paragraph
                 text = _re2.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", html.escape(s))
                 parts.append(f"<p style='margin:3px 0;line-height:1.7;'>{text}</p>")
-    
+
     if in_list:
         parts.append("</ul>")
     return "".join(parts)
+
 
 # ── Appointment renderer ──────────────────────────────────────
 def _render_appointment(raw: str):
@@ -98,7 +97,11 @@ def _render_appointment(raw: str):
             elif s.startswith("- ") and current_appt:
                 current_appt["details"].append(s[2:])
             elif s.startswith("- "):
-                items_html += f"<div style='display:flex;gap:8px;margin:6px 0;'><span style='color:{accent};font-weight:700;'>•</span><span style='color:#1a1a2e;font-size:14px;'>{html.escape(s[2:])}</span></div>"
+                items_html += (
+                    f"<div style='display:flex;gap:8px;margin:6px 0;'>"
+                    f"<span style='color:{accent};font-weight:700;'>•</span>"
+                    f"<span style='color:#1a1a2e;font-size:14px;'>{html.escape(s[2:])}</span></div>"
+                )
 
         if current_appt:
             appt_blocks.append(current_appt)
@@ -108,25 +111,30 @@ def _render_appointment(raw: str):
             for d in appt.get("details", []):
                 key, _, val = d.partition(":")
                 if val:
-                    details_html += f"<div style='font-size:13px;color:#555;margin:3px 0;'><span style='font-weight:700;color:{accent};'>{html.escape(key.strip())}:</span> {html.escape(val.strip())}</div>"
+                    details_html += (
+                        f"<div style='font-size:13px;color:#555;margin:3px 0;'>"
+                        f"<span style='font-weight:700;color:{accent};'>{html.escape(key.strip())}:</span>"
+                        f" {html.escape(val.strip())}</div>"
+                    )
                 else:
                     details_html += f"<div style='font-size:13px;color:#555;margin:3px 0;'>{html.escape(d)}</div>"
-            items_html += f"""
-            <div style='background:white;border-radius:12px;padding:12px 16px;margin:8px 0;
-                border-left:4px solid {accent};box-shadow:0 2px 8px rgba(0,0,0,0.06);'>
-                <div style='font-size:14px;font-weight:800;color:{accent};margin-bottom:6px;'>📅 {html.escape(appt["date"])}</div>
-                {details_html}
-            </div>"""
+            items_html += (
+                f"<div style='background:white;border-radius:12px;padding:12px 16px;margin:8px 0;"
+                f"border-left:4px solid {accent};box-shadow:0 2px 8px rgba(0,0,0,0.06);'>"
+                f"<div style='font-size:14px;font-weight:800;color:{accent};margin-bottom:6px;'>"
+                f"📅 {html.escape(appt['date'])}</div>{details_html}</div>"
+            )
 
-        st.markdown(f"""
-        <div style='background:{bg};border:1.5px solid {border};border-radius:20px;
-            padding:20px 24px;margin:12px 0;'>
-            <div style='font-size:16px;font-weight:800;color:{accent};margin-bottom:12px;
-                padding-bottom:8px;border-bottom:1.5px solid {border};'>{html.escape(title_raw)}</div>
-            {items_html}
-        </div>
-        """, unsafe_allow_html=True)
-        
+        st.markdown(
+            f"<div style='background:{bg};border:1.5px solid {border};border-radius:20px;"
+            f"padding:20px 24px;margin:12px 0;'>"
+            f"<div style='font-size:16px;font-weight:800;color:{accent};margin-bottom:12px;"
+            f"padding-bottom:8px;border-bottom:1.5px solid {border};'>{html.escape(title_raw)}</div>"
+            f"{items_html}</div>",
+            unsafe_allow_html=True,
+        )
+
+
 # ── Page config ───────────────────────────────────────────────
 st.set_page_config(
     page_title="MediChat — Your Medical Assistant",
@@ -148,7 +156,6 @@ header { visibility: hidden; }
 .block-container { padding: 0 !important; max-width: 100% !important; }
 .stApp { background: #f0f4ff; min-height: 100vh; }
 
-/* ── Sidebar ── */
 [data-testid="collapsedControl"] { display: none !important; }
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 
@@ -161,10 +168,6 @@ header { visibility: hidden; }
 }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 [data-testid="stSidebar"] * { color: #dce8ff !important; }
-[data-testid="stFileUploader"] *:not(button) {
-    color: #0d2b6e !important; opacity: 1 !important;
-    -webkit-text-fill-color: #0d2b6e !important;
-}
 [data-testid="stFileUploader"] {
     background: rgba(255,255,255,0.08) !important;
     border: 2px dashed rgba(74,144,217,0.6) !important;
@@ -187,59 +190,20 @@ header { visibility: hidden; }
     width: auto !important;
     height: auto !important;
     margin: 0 !important;
-    border-radius: 8px !important;
 }
-[data-testid="stFileUploader"] small {
-    display: none !important;
-}
+[data-testid="stFileUploader"] small { display: none !important; }
 [data-testid="stSidebar"] .stMarkdown p,
 [data-testid="stSidebar"] .stMarkdown li { color: #9ab4e0 !important; font-size: 13px; line-height: 1.7; }
 
-/* Section labels */
 .sidebar-section-label {
     font-size: 9px; font-weight: 800; letter-spacing: 2.5px;
     text-transform: uppercase; color: #4a6aaa !important;
     margin: 0 0 8px; display: block;
 }
 
-/* File uploader */
-[data-testid="stFileUploader"] {
-    background: rgba(5,15,50,0.6) !important;
-    border: 2px dashed rgba(74,144,217,0.5) !important;
-    border-radius: 16px !important;
-    padding: 12px !important;
-}
-[data-testid="stFileUploader"]:hover {
-    border-color: rgba(74,144,217,0.9) !important;
-}
-[data-testid="stFileUploader"] button {
-    background: rgba(74,144,217,0.3) !important;
-    border: 1px solid rgba(74,144,217,0.6) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    font-size: 12px !important;
-}
-[data-testid="stFileUploader"] small,
-[data-testid="stFileUploader"] span[class*="instructions"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
-}
-[data-testid="stFileUploader"] * { color: ##0d2b6e !important; -webkit-text-fill-color: ##0d2b6e !important; }
-[data-testid="stFileUploader"] button * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+[data-testid="stFileUploader"]:hover { border-color: rgba(74,144,217,0.9) !important; }
+[data-testid="stFileUploader"] svg { display: none !important; }
 
-[data-testid="stFileUploader"] svg {
-    display: none !important;
-}
-[data-testid="stFileUploader"] [class*="fileIcon"],
-[data-testid="stFileUploader"] [class*="thumbnail"] {
-    display: none !important;
-}
-
-/* Process button */
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
     background: linear-gradient(135deg, #3a7bd5, #1a4fa8) !important;
@@ -258,7 +222,6 @@ header { visibility: hidden; }
     box-shadow: 0 10px 28px rgba(26,79,168,0.55) !important;
 }
 
-/* Doc pills */
 .doc-pill {
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
@@ -269,7 +232,6 @@ header { visibility: hidden; }
     word-break: break-all; line-height: 1.4;
 }
 
-/* Chips */
 .chip {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.08);
@@ -278,7 +240,6 @@ header { visibility: hidden; }
     line-height: 1.5; margin: 4px 0; display: block;
 }
 
-/* Download buttons */
 [data-testid="stSidebar"] [data-testid="stDownloadButton"] > button {
     width: 100% !important;
     background: rgba(255,255,255,0.05) !important;
@@ -291,7 +252,6 @@ header { visibility: hidden; }
     background: rgba(255,255,255,0.10) !important;
 }
 
-/* Divider */
 [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.06) !important; margin: 18px 0 !important; }
 
 [data-testid="stSidebar"] input {
@@ -311,7 +271,6 @@ header { visibility: hidden; }
     border-radius: 12px !important;
 }
 
-/* ── Top Navbar ── */
 .top-navbar {
     position: sticky; top: 0; z-index: 999;
     background: rgba(255,255,255,0.95);
@@ -322,53 +281,7 @@ header { visibility: hidden; }
     display: flex; align-items: center; justify-content: space-between;
     height: 64px;
 }
-.navbar-brand {
-    display: flex; align-items: center; gap: 10px;
-}
-.navbar-brand .brand-icon { font-size: 26px; }
-.navbar-brand .brand-name {
-    font-family: 'Playfair Display', serif; font-size: 20px;
-    font-weight: 700; color: #0d2b6e;
-}
-.navbar-tabs {
-    display: flex; align-items: center; gap: 4px;
-}
-.navbar-tab {
-    padding: 8px 20px; border-radius: 12px; font-size: 14px;
-    font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-    font-family: 'Nunito', sans-serif; border: none; background: transparent;
-    color: #5a7abf; letter-spacing: 0.2px;
-}
-.navbar-tab.active {
-    background: linear-gradient(135deg, #2451b3, #4a90d9);
-    color: white !important; box-shadow: 0 4px 12px rgba(36,81,179,0.3);
-}
-.navbar-tab:hover:not(.active) { background: rgba(74,144,217,0.1); color: #2451b3; }
 
-.navbar-user {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(74,144,217,0.08); border-radius: 20px;
-    padding: 6px 14px; font-size: 13px; color: #2451b3; font-weight: 600;
-}
-
-/* ── Page wrapper ── */
-.page-content {
-    padding: 24px 32px 40px;
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-/* ── Agent landing hero ── */
-.agents-hero {
-    text-align: center; padding: 36px 0 28px;
-}
-.agents-hero h1 {
-    font-family: 'Playfair Display', serif; font-size: 34px;
-    font-weight: 700; color: #0d2b6e; margin: 0 0 8px;
-}
-.agents-hero p { font-size: 15px; color: #5a7abf; margin: 0; font-weight: 500; }
-
-/* ── Agent grid cards ── */
 .agent-grid-card {
     background: white; border-radius: 20px;
     padding: 28px 20px 20px; text-align: center;
@@ -389,13 +302,9 @@ header { visibility: hidden; }
     border-radius: 20px; letter-spacing: 0.5px;
 }
 .agent-card-icon { font-size: 40px; margin-bottom: 12px; display: block; }
-.agent-card-name {
-    font-weight: 800; color: #0d2b6e; font-size: 14px;
-    margin-bottom: 6px; font-family: 'Nunito', sans-serif;
-}
+.agent-card-name { font-weight: 800; color: #0d2b6e; font-size: 14px; margin-bottom: 6px; }
 .agent-card-desc { font-size: 12px; color: #5a7abf; line-height: 1.5; }
 
-/* ── Agent result panel ── */
 .agent-result-panel {
     background: white; border-radius: 20px; padding: 28px 32px;
     margin: 8px 0 20px; box-shadow: 0 4px 24px rgba(13,43,110,0.10);
@@ -407,19 +316,6 @@ header { visibility: hidden; }
 }
 .agent-result-sub { font-size: 13px; color: #5a7abf; margin-bottom: 20px; }
 
-/* ── Chat page ── */
-.chat-page-wrapper {
-    display: flex; flex-direction: column; height: calc(100vh - 64px);
-}
-.chat-messages-area {
-    flex: 1; overflow-y: auto; padding: 24px 0 16px;
-}
-.chat-input-area {
-    padding: 12px 0 24px; border-top: 1px solid rgba(74,144,217,0.1);
-    background: #f0f4ff;
-}
-
-/* Chat input override */
 [data-testid="stChatInput"] {
     background: white !important; border-radius: 20px !important;
     border: 2px solid rgba(74,144,217,0.25) !important;
@@ -441,7 +337,6 @@ header { visibility: hidden; }
     box-shadow: 0 2px 8px rgba(37,99,199,0.3) !important;
 }
 
-/* ── Documents page ── */
 .docs-section-title {
     font-family: 'Playfair Display', serif; font-size: 26px;
     color: #0d2b6e; font-weight: 700; margin-bottom: 6px;
@@ -457,7 +352,6 @@ header { visibility: hidden; }
 .doc-card-name { font-weight: 700; color: #0d2b6e; font-size: 14px; }
 .doc-card-status { font-size: 12px; color: #2eaa5e; margin-top: 2px; }
 
-/* ── Processing overlay ── */
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes bar { 0% { width: 0%; } 100% { width: 100%; } }
@@ -485,40 +379,22 @@ header { visibility: hidden; }
     font-weight: 700; color: #0d2b6e; margin-bottom: 8px;
 }
 .processing-sub { font-size: 14px; color: #5a7abf; margin-bottom: 28px; line-height: 1.6; }
-.progress-bar-wrap {
-    background: #e8eeff; border-radius: 20px; height: 6px;
-    overflow: hidden; margin-bottom: 20px;
-}
+.progress-bar-wrap { background: #e8eeff; border-radius: 20px; height: 6px; overflow: hidden; margin-bottom: 20px; }
 .progress-bar-fill {
     height: 6px; background: linear-gradient(90deg, #4a90d9, #2451b3);
     border-radius: 20px; animation: bar 3s ease-in-out infinite alternate;
 }
 .processing-steps { display: flex; flex-direction: column; gap: 10px; text-align: left; }
-.step-item {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 13px; color: #5a7abf; font-family: 'Nunito', sans-serif;
-}
-.step-dot {
-    width: 8px; height: 8px; background: #4a90d9; border-radius: 50%;
-    flex-shrink: 0; animation: pulse 1.5s infinite;
-}
+.step-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5a7abf; }
+.step-dot { width: 8px; height: 8px; background: #4a90d9; border-radius: 50%; flex-shrink: 0; animation: pulse 1.5s infinite; }
 
-/* ── Alerts ── */
-[data-testid="stAlert"] {
-    border-radius: 14px !important; border: none !important;
-    font-family: 'Nunito', sans-serif !important; font-size: 14px !important;
-}
+[data-testid="stAlert"] { border-radius: 14px !important; border: none !important; font-family: 'Nunito', sans-serif !important; font-size: 14px !important; }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(74,144,217,0.3); border-radius: 10px; }
 
-/* Main area top padding reset */
 .main > div:first-child { padding-top: 0 !important; }
-
-/* Run all agents button in main area */
-.run-all-btn-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -548,9 +424,8 @@ defaults = {
     "active_tab": "agents",
     "recipient_email": "",
     "docs_just_processed": False,
-    "user_language": "English",  # ← new
+    "user_language": "English",
     "voice_input_field": "",
-
 }
 
 for k, v in defaults.items():
@@ -565,9 +440,12 @@ if "orchestrator" not in st.session_state:
 def build_txt_export(chat_history, user_name, user_mood, user_conditions):
     lines = ["=" * 60, "       MediChat — Conversation Export", "=" * 60]
     lines.append(f"Date     : {datetime.now().strftime('%d %B %Y, %I:%M %p')}")
-    if user_name: lines.append(f"Patient  : {user_name}")
-    if user_mood: lines.append(f"Mood     : {user_mood}")
-    if user_conditions: lines.append(f"Conditions: {', '.join(user_conditions)}")
+    if user_name:
+        lines.append(f"Patient  : {user_name}")
+    if user_mood:
+        lines.append(f"Mood     : {user_mood}")
+    if user_conditions:
+        lines.append(f"Conditions: {', '.join(user_conditions)}")
     lines += ["=" * 60, ""]
     for msg in chat_history:
         role = "You" if msg["role"] == "user" else "MediChat"
@@ -581,40 +459,71 @@ def build_pdf_export(chat_history, user_name, user_mood, user_conditions):
         from fpdf import FPDF
     except ImportError:
         return None
+
     class PDF(FPDF):
         def header(self):
-            self.set_fill_color(13, 43, 110); self.rect(0, 0, 210, 22, 'F')
-            self.set_font("Helvetica", "B", 14); self.set_text_color(255, 255, 255)
-            self.set_y(6); self.cell(0, 10, "MediChat  --  Medical Conversation Export", align="C"); self.ln(18)
+            self.set_fill_color(13, 43, 110)
+            self.rect(0, 0, 210, 22, "F")
+            self.set_font("Helvetica", "B", 14)
+            self.set_text_color(255, 255, 255)
+            self.set_y(6)
+            self.cell(0, 10, "MediChat  --  Medical Conversation Export", align="C")
+            self.ln(18)
+
         def footer(self):
-            self.set_y(-14); self.set_font("Helvetica", "I", 8); self.set_text_color(150, 150, 150)
+            self.set_y(-14)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(150, 150, 150)
             self.cell(0, 10, "For informational purposes only. Always consult your doctor.", align="C")
+
     try:
-        pdf = PDF(); pdf.set_auto_page_break(auto=True, margin=18); pdf.add_page()
-        pdf.set_fill_color(232, 240, 255); pdf.set_draw_color(180, 200, 240)
-        pdf.set_font("Helvetica", "", 9); pdf.set_text_color(30, 50, 110)
+        pdf = PDF()
+        pdf.set_auto_page_break(auto=True, margin=18)
+        pdf.add_page()
+        pdf.set_fill_color(232, 240, 255)
+        pdf.set_draw_color(180, 200, 240)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(30, 50, 110)
         meta_lines = [f"Date: {datetime.now().strftime('%d %B %Y, %I:%M %p')}"]
-        if user_name: meta_lines.append(f"Patient: {user_name}")
-        if user_mood: meta_lines.append(f"Mood: {user_mood}")
-        if user_conditions: meta_lines.append(f"Conditions: {', '.join(user_conditions)}")
-        pdf.set_x(10); pdf.cell(190, 8, "   |   ".join(meta_lines), border=1, fill=True, ln=True); pdf.ln(5)
+        if user_name:
+            meta_lines.append(f"Patient: {user_name}")
+        if user_mood:
+            meta_lines.append(f"Mood: {user_mood}")
+        if user_conditions:
+            meta_lines.append(f"Conditions: {', '.join(user_conditions)}")
+        pdf.set_x(10)
+        pdf.cell(190, 8, "   |   ".join(meta_lines), border=1, fill=True, ln=True)
+        pdf.ln(5)
         for msg in chat_history:
             is_user = msg["role"] == "user"
             content = msg["content"].encode("latin-1", errors="replace").decode("latin-1")
-            pdf.set_font("Helvetica", "B", 8); pdf.set_text_color(100, 120, 180)
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.set_text_color(100, 120, 180)
             label = f"  {user_name or 'You'}  " if is_user else "  MediChat  "
             if is_user:
-                pdf.set_x(10 + 95); pdf.cell(95, 5, label, align="R", ln=True)
-                pdf.set_font("Helvetica", "", 10); pdf.set_fill_color(220, 248, 198); pdf.set_text_color(20, 60, 20)
-                pdf.set_x(10 + 40); pdf.multi_cell(150, 6, content, fill=True, border=0)
+                pdf.set_x(10 + 95)
+                pdf.cell(95, 5, label, align="R", ln=True)
+                pdf.set_font("Helvetica", "", 10)
+                pdf.set_fill_color(220, 248, 198)
+                pdf.set_text_color(20, 60, 20)
+                pdf.set_x(10 + 40)
+                pdf.multi_cell(150, 6, content, fill=True, border=0)
             else:
-                pdf.set_x(10); pdf.cell(95, 5, label, align="L", ln=True)
-                pdf.set_font("Helvetica", "", 10); pdf.set_fill_color(240, 245, 255); pdf.set_text_color(13, 43, 110)
-                pdf.set_x(10); pdf.multi_cell(150, 6, content, fill=True, border=0)
+                pdf.set_x(10)
+                pdf.cell(95, 5, label, align="L", ln=True)
+                pdf.set_font("Helvetica", "", 10)
+                pdf.set_fill_color(240, 245, 255)
+                pdf.set_text_color(13, 43, 110)
+                pdf.set_x(10)
+                pdf.multi_cell(150, 6, content, fill=True, border=0)
             pdf.ln(3)
-        buf = io.BytesIO(); buf.write(pdf.output()); buf.seek(0); return buf
+        buf = io.BytesIO()
+        buf.write(pdf.output())
+        buf.seek(0)
+        return buf
     except Exception as e:
-        print(f"[pdf_export] Error: {e}"); return None
+        print(f"[pdf_export] Error: {e}")
+        return None
 
 
 def _set_welcome_message():
@@ -649,7 +558,6 @@ def _set_welcome_message():
 
 
 def _set_docs_ready_message():
-    """Called after documents are processed — the bot leads by offering to walk through them."""
     name = st.session_state.user_name or "there"
     mood = st.session_state.user_mood
     mood_responses = {
@@ -720,101 +628,158 @@ def show_onboarding():
     for i in range(1, 5):
         cls = "active" if i == step else ("done" if i < step else "idle")
         dots_html += f'<span class="ob-dot {cls}"></span>'
-    dots_html += '</div>'
+    dots_html += "</div>"
     st.markdown(dots_html, unsafe_allow_html=True)
 
     if step == 1:
-        st.markdown('<div class="ob-label">Step 1 of 4</div><div class="ob-title">Let\'s get acquainted</div><div class="ob-sub">Tell us a bit about yourself and who this report is for</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="ob-label">Step 1 of 4</div>'
+            '<div class="ob-title">Let\'s get acquainted</div>'
+            '<div class="ob-sub">Tell us a bit about yourself and who this report is for</div>',
+            unsafe_allow_html=True,
+        )
         name = st.text_input("Your name (optional)", value=st.session_state.user_name, placeholder="e.g. Aryan")
         st.markdown('<p style="font-size:13px;font-weight:600;color:#6a7ab5;margin:16px 0 12px;">This report is for:</p>', unsafe_allow_html=True)
-        whom_options = [("me","🧑","Myself"),("parent","👴","My Parent"),("child","👶","My Child"),("other","🤝","Friend")]
+        whom_options = [("me", "🧑", "Myself"), ("parent", "👴", "My Parent"), ("child", "👶", "My Child"), ("other", "🤝", "Friend")]
         cols = st.columns(4)
         for i, (key, icon, label) in enumerate(whom_options):
             with cols[i]:
                 selected = st.session_state.user_whom == key
                 if st.button(f"{icon}\n\n{label}", key=f"whom_{key}", use_container_width=True, type="primary" if selected else "secondary"):
-                    st.session_state.user_name = name; st.session_state.user_whom = key; st.rerun()
+                    st.session_state.user_name = name
+                    st.session_state.user_whom = key
+                    st.rerun()
         st.markdown("<br>", unsafe_allow_html=True)
         col_skip, col_next = st.columns([1, 1])
         with col_skip:
             if st.button("Skip for now", use_container_width=True, key="ob_skip1"):
-                st.session_state.user_name = name; st.session_state.onboarding_done = True; _set_welcome_message(); st.rerun()
+                st.session_state.user_name = name
+                st.session_state.onboarding_done = True
+                _set_welcome_message()
+                st.rerun()
         with col_next:
             if st.button("Continue →", use_container_width=True, type="primary", key="ob_next1"):
-                st.session_state.user_name = name; st.session_state.ob_step = 2; st.rerun()
+                st.session_state.user_name = name
+                st.session_state.ob_step = 2
+                st.rerun()
 
     elif step == 2:
-        age_titles = {"me":"How old are you?","parent":"How old is your parent?","child":"How old is your child?","other":"How old are they?"}
+        age_titles = {
+            "me": "How old are you?",
+            "parent": "How old is your parent?",
+            "child": "How old is your child?",
+            "other": "How old are they?",
+        }
         title = age_titles.get(st.session_state.user_whom, "How old are you?")
-        st.markdown(f'<div class="ob-label">Step 2 of 4</div><div class="ob-title">{title}</div><div class="ob-sub">Drag to set the age</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="ob-label">Step 2 of 4</div>'
+            f'<div class="ob-title">{title}</div>'
+            f'<div class="ob-sub">Drag to set the age</div>',
+            unsafe_allow_html=True,
+        )
         selected_age = st.slider("Age", min_value=1, max_value=100, value=st.session_state.user_age, key="slider_age_temp", label_visibility="collapsed")
         st.markdown(f'<div class="age-big">{selected_age}</div><div class="age-unit">years old</div><br>', unsafe_allow_html=True)
         col_back, col_next = st.columns([1, 1])
         with col_back:
             if st.button("← Back", use_container_width=True, key="ob_back2"):
-                st.session_state.user_age = selected_age; st.session_state.ob_step = 1; st.rerun()
+                st.session_state.user_age = selected_age
+                st.session_state.ob_step = 1
+                st.rerun()
         with col_next:
             if st.button("Continue →", use_container_width=True, type="primary", key="ob_next2"):
-                st.session_state.user_age = selected_age; st.session_state.ob_step = 3; st.rerun()
+                st.session_state.user_age = selected_age
+                st.session_state.ob_step = 3
+                st.rerun()
 
     elif step == 3:
-        st.markdown('<div class="ob-label">Step 3 of 4</div><div class="ob-title">Any existing conditions?</div><div class="ob-sub">Select all that apply</div>', unsafe_allow_html=True)
-        cond_options = [("diabetes","Diabetes","🩸"),("hypertension","Hypertension","💓"),("heart","Heart Disease","❤️"),("thyroid","Thyroid","🦋"),("asthma","Asthma","🫁"),("neurological","Neurological","🧠"),("none","None","✅"),("other","Other","➕")]
+        st.markdown(
+            '<div class="ob-label">Step 3 of 4</div>'
+            '<div class="ob-title">Any existing conditions?</div>'
+            '<div class="ob-sub">Select all that apply</div>',
+            unsafe_allow_html=True,
+        )
+        cond_options = [
+            ("diabetes", "Diabetes", "🩸"), ("hypertension", "Hypertension", "💓"),
+            ("heart", "Heart Disease", "❤️"), ("thyroid", "Thyroid", "🦋"),
+            ("asthma", "Asthma", "🫁"), ("neurological", "Neurological", "🧠"),
+            ("none", "None", "✅"), ("other", "Other", "➕"),
+        ]
         current = set(st.session_state.user_conditions)
         cols = st.columns(2)
         for i, (key, label, icon) in enumerate(cond_options):
             with cols[i % 2]:
                 selected = key in current
                 if st.button(f"{icon} {label}", key=f"cond_{key}", use_container_width=True, type="primary" if selected else "secondary"):
-                    if key == "none": st.session_state.user_conditions = ["none"]
+                    if key == "none":
+                        st.session_state.user_conditions = ["none"]
                     else:
                         new = set(st.session_state.user_conditions) - {"none"}
-                        if key in new: new.remove(key)
-                        else: new.add(key)
+                        if key in new:
+                            new.remove(key)
+                        else:
+                            new.add(key)
                         st.session_state.user_conditions = list(new)
                     st.rerun()
         col_back, col_skip, col_next = st.columns([1, 1, 1])
         with col_back:
-            if st.button("← Back", use_container_width=True, key="ob_back3"): st.session_state.ob_step = 2; st.rerun()
+            if st.button("← Back", use_container_width=True, key="ob_back3"):
+                st.session_state.ob_step = 2
+                st.rerun()
         with col_skip:
-            if st.button("Skip", use_container_width=True, key="ob_skip3"): st.session_state.user_conditions = []; st.session_state.ob_step = 4; st.rerun()
+            if st.button("Skip", use_container_width=True, key="ob_skip3"):
+                st.session_state.user_conditions = []
+                st.session_state.ob_step = 4
+                st.rerun()
         with col_next:
-            if st.button("Continue →", use_container_width=True, type="primary", key="ob_next3"): st.session_state.ob_step = 4; st.rerun()
+            if st.button("Continue →", use_container_width=True, type="primary", key="ob_next3"):
+                st.session_state.ob_step = 4
+                st.rerun()
 
     elif step == 4:
-        st.markdown('<div class="ob-label">Step 4 of 4</div><div class="ob-title">How are you feeling?</div><div class="ob-sub">We\'ll match our tone to how you feel right now</div>', unsafe_allow_html=True)
-
-        # Language picker
+        st.markdown(
+            '<div class="ob-label">Step 4 of 4</div>'
+            '<div class="ob-title">How are you feeling?</div>'
+            '<div class="ob-sub">We\'ll match our tone to how you feel right now</div>',
+            unsafe_allow_html=True,
+        )
         st.markdown('<p style="font-size:13px;font-weight:600;color:#6a7ab5;margin:16px 0 8px;">🌐 Preferred Language</p>', unsafe_allow_html=True)
         languages = ["English", "Hindi", "Malayalam"]
         lang_cols1 = st.columns(3)
         for i, lang in enumerate(languages):
             with lang_cols1[i]:
                 selected = st.session_state.user_language == lang
-                if st.button(lang, key=f"lang_{lang}", use_container_width=True,
-                             type="primary" if selected else "secondary"):
+                if st.button(lang, key=f"lang_{lang}", use_container_width=True, type="primary" if selected else "secondary"):
                     st.session_state.user_language = lang
                     st.rerun()
         st.markdown("<br>", unsafe_allow_html=True)
-        all_moods = [("Happy","😊"),("Relieved","😌"),("Patient","🏥"),("Neutral","😐"),("Anxious","😟"),("Sad","😔"),("Tired","😴"),("Calm","🧘"),("Strong","💪"),("Unwell","🤒"),("Confused","😕"),("Irritable","😤")]
+        all_moods = [
+            ("Happy", "😊"), ("Relieved", "😌"), ("Patient", "🏥"), ("Neutral", "😐"),
+            ("Anxious", "😟"), ("Sad", "😔"), ("Tired", "😴"), ("Calm", "🧘"),
+            ("Strong", "💪"), ("Unwell", "🤒"), ("Confused", "😕"), ("Irritable", "😤"),
+        ]
         current_mood = st.session_state.user_mood
         cols_per_row = 4
-        rows = [all_moods[i:i+cols_per_row] for i in range(0, len(all_moods), cols_per_row)]
+        rows = [all_moods[i:i + cols_per_row] for i in range(0, len(all_moods), cols_per_row)]
         for row in rows:
             cols = st.columns(len(row))
             for j, (mood_name, emoji) in enumerate(row):
                 with cols[j]:
                     if st.button(f"{emoji}\n\n{mood_name}", key=f"mood_{mood_name}", use_container_width=True, type="primary" if mood_name == current_mood else "secondary"):
-                        st.session_state.user_mood = mood_name; st.rerun()
+                        st.session_state.user_mood = mood_name
+                        st.rerun()
         col_back, col_done = st.columns([1, 1])
         with col_back:
-            if st.button("← Back", use_container_width=True, key="ob_back4"): st.session_state.ob_step = 3; st.rerun()
+            if st.button("← Back", use_container_width=True, key="ob_back4"):
+                st.session_state.ob_step = 3
+                st.rerun()
         with col_done:
             if st.button("Get started", use_container_width=True, type="primary", key="ob_done"):
-                st.session_state.onboarding_done = True; _set_welcome_message(); st.rerun()
+                st.session_state.onboarding_done = True
+                _set_welcome_message()
+                st.rerun()
 
 
-# ── ONBOARDING GATE (flicker-free) ───────────────────────────
+# ── ONBOARDING GATE ───────────────────────────────────────────
 if not st.session_state.get("onboarding_done", False):
     show_onboarding()
     st.stop()
@@ -836,41 +801,34 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <script>
-    function cleanUploader() {
-        const uploader = window.parent.document.querySelector('[data-testid="stFileUploader"]');
-        if (uploader) {
-            const small = uploader.querySelector('small');
-            if (small) small.style.display = 'none';
-            const svgs = uploader.querySelectorAll('svg');
-            svgs.forEach(s => s.style.display = 'none');
-            const imgs = uploader.querySelectorAll('img');
-            imgs.forEach(i => i.style.display = 'none');
-        }
-    }
-    setInterval(cleanUploader, 300);
-    </script>
-    """, unsafe_allow_html=True)
-
-    # User profile chip
     if st.session_state.user_name:
-        mood_emoji_map = {"Happy":"😊","Relieved":"😌","Patient":"🏥","Sad":"😔","Neutral":"😐","Anxious":"😟","Irritable":"😤","Tired":"😴","Strong":"💪","Unwell":"🤒","Calm":"🧘","Confused":"😕"}
+        mood_emoji_map = {
+            "Happy": "😊", "Relieved": "😌", "Patient": "🏥", "Sad": "😔",
+            "Neutral": "😐", "Anxious": "😟", "Irritable": "😤", "Tired": "😴",
+            "Strong": "💪", "Unwell": "🤒", "Calm": "🧘", "Confused": "😕",
+        }
         mood_emoji = mood_emoji_map.get(st.session_state.user_mood, "😐")
-        whom_label = {"me":"Myself","parent":"Parent","child":"Child","other":"Other"}.get(st.session_state.user_whom, "")
-        st.markdown(f"""
-        <div style="background:rgba(255,255,255,0.08);border-radius:14px;padding:10px 14px;
-            margin-bottom:16px;border:1px solid rgba(255,255,255,0.12);">
-            <div style="font-size:12px;color:#8aaee0;margin-bottom:2px;">Logged in as</div>
-            <div style="font-size:15px;color:#fff;font-weight:600;">
-                {html.escape(st.session_state.user_name)} &nbsp;{mood_emoji} {html.escape(st.session_state.user_mood)}
-            </div>
-            {"<div style='font-size:11px;color:#6a9ad4;margin-top:2px;'>Report for: " + whom_label + " · Age: " + str(st.session_state.user_age) + "</div>" if whom_label else ""}
-        </div>
-        """, unsafe_allow_html=True)
+        whom_label = {"me": "Myself", "parent": "Parent", "child": "Child", "other": "Other"}.get(st.session_state.user_whom, "")
+        whom_line = (
+            f"<div style='font-size:11px;color:#6a9ad4;margin-top:2px;'>"
+            f"Report for: {whom_label} · Age: {st.session_state.user_age}</div>"
+            if whom_label else ""
+        )
+        st.markdown(
+            f"<div style='background:rgba(255,255,255,0.08);border-radius:14px;padding:10px 14px;"
+            f"margin-bottom:16px;border:1px solid rgba(255,255,255,0.12);'>"
+            f"<div style='font-size:12px;color:#8aaee0;margin-bottom:2px;'>Logged in as</div>"
+            f"<div style='font-size:15px;color:#fff;font-weight:600;'>"
+            f"{html.escape(st.session_state.user_name)} &nbsp;{mood_emoji} {html.escape(st.session_state.user_mood)}"
+            f"</div>{whom_line}</div>",
+            unsafe_allow_html=True,
+        )
 
-    # ── Always-visible document upload ───────────────────────
-    st.markdown('<p style="font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#4a6aaa;margin:0 0 8px;display:block;">📂 Upload Documents</p>', unsafe_allow_html=True)
+    st.markdown(
+        '<p style="font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;'
+        'color:#4a6aaa;margin:0 0 8px;display:block;">📂 Upload Documents</p>',
+        unsafe_allow_html=True,
+    )
     uploaded_files = st.file_uploader(
         "Drop your files here",
         type=["pdf", "jpg", "jpeg", "png", "webp", "docx", "txt"],
@@ -884,16 +842,18 @@ with st.sidebar:
             status_icon = "✅" if already_done else "📄"
             status_text = "Processed & ready" if already_done else "Ready to process"
             status_color = "#1a8a4a" if already_done else "#2451b3"
-            st.markdown(f'''
-            <div style="background:#ffffff;border:1px solid {'#2eaa5e' if already_done else '#2451b3'};
-                border-radius:12px;padding:10px 14px;margin:6px 0;
-                display:flex;align-items:center;gap:10px;">
-                <span style="font-size:18px;">{status_icon}</span>
-                <div>
-                    <div style="font-size:13px;font-weight:700;color:#0d2b6e;-webkit-text-fill-color:#0d2b6e;">{html.escape(f.name)}</div>
-                    <div style="font-size:11px;font-weight:600;color:{status_color};-webkit-text-fill-color:{status_color};">{status_text}</div>
-                </div>
-            </div>''', unsafe_allow_html=True)
+            border_color = "#2eaa5e" if already_done else "#2451b3"
+            st.markdown(
+                f"<div style='background:#ffffff;border:1px solid {border_color};"
+                f"border-radius:12px;padding:10px 14px;margin:6px 0;"
+                f"display:flex;align-items:center;gap:10px;'>"
+                f"<span style='font-size:18px;'>{status_icon}</span>"
+                f"<div>"
+                f"<div style='font-size:13px;font-weight:700;color:#0d2b6e;-webkit-text-fill-color:#0d2b6e;'>{html.escape(f.name)}</div>"
+                f"<div style='font-size:11px;font-weight:600;color:{status_color};-webkit-text-fill-color:{status_color};'>{status_text}</div>"
+                f"</div></div>",
+                unsafe_allow_html=True,
+            )
 
     if uploaded_files:
         col_l, col_btn, col_r = st.columns([0.5, 4, 0.5])
@@ -903,28 +863,53 @@ with st.sidebar:
                 st.session_state.files_to_process = [{"name": f.name, "data": f.read()} for f in uploaded_files]
                 st.rerun()
 
-
-
-    # ── Chat-specific: export & suggestions ──────────────────
     if st.session_state.active_tab == "chat":
         if st.session_state.chat_history and len(st.session_state.chat_history) > 1:
             st.markdown("---")
             st.markdown('<p class="sidebar-section-label">Export Chat</p>', unsafe_allow_html=True)
             fname_base = f"medichat_{datetime.now().strftime('%Y%m%d_%H%M')}"
-            txt_content = build_txt_export(st.session_state.chat_history, st.session_state.user_name, st.session_state.user_mood, st.session_state.user_conditions)
-            st.download_button(label="📄  Download as Text", data=txt_content.encode("utf-8"), file_name=f"{fname_base}.txt", mime="text/plain", use_container_width=True)
-            pdf_buf = build_pdf_export(st.session_state.chat_history, st.session_state.user_name, st.session_state.user_mood, st.session_state.user_conditions)
+            txt_content = build_txt_export(
+                st.session_state.chat_history,
+                st.session_state.user_name,
+                st.session_state.user_mood,
+                st.session_state.user_conditions,
+            )
+            st.download_button(
+                label="📄  Download as Text",
+                data=txt_content.encode("utf-8"),
+                file_name=f"{fname_base}.txt",
+                mime="text/plain",
+                use_container_width=True,
+            )
+            pdf_buf = build_pdf_export(
+                st.session_state.chat_history,
+                st.session_state.user_name,
+                st.session_state.user_mood,
+                st.session_state.user_conditions,
+            )
             if pdf_buf:
-                st.download_button(label="📑  Download as PDF", data=pdf_buf, file_name=f"{fname_base}.pdf", mime="application/pdf", use_container_width=True)
+                st.download_button(
+                    label="📑  Download as PDF",
+                    data=pdf_buf,
+                    file_name=f"{fname_base}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
 
         st.markdown("---")
         st.markdown('<p class="sidebar-section-label">Try asking</p>', unsafe_allow_html=True)
-        for q in ["What does my creatinine level mean?","What medications were prescribed?","Is my blood sugar normal?","What was the diagnosis?","Which values are abnormal?","What follow-up is needed?"]:
+        for q in [
+            "What does my creatinine level mean?",
+            "What medications were prescribed?",
+            "Is my blood sugar normal?",
+            "What was the diagnosis?",
+            "Which values are abnormal?",
+            "What follow-up is needed?",
+        ]:
             if st.button(f"💬 {q}", key=f"chip_{q}", use_container_width=True):
                 st.session_state.active_tab = "chat"
                 history_before = list(st.session_state.chat_history)
                 st.session_state.chat_history.append({"role": "user", "content": q})
-                from qa_chain import get_answer
                 if st.session_state.llm:
                     answer = get_answer(
                         llm=st.session_state.llm,
@@ -966,7 +951,6 @@ with st.sidebar:
     languages = ["English", "Hindi", "Malayalam"]
     current_lang = st.session_state.get("user_language", "English")
     current_index = languages.index(current_lang) if current_lang in languages else 0
-
     selected_lang = st.selectbox(
         "Language",
         options=languages,
@@ -988,9 +972,14 @@ with st.sidebar:
         st.session_state.user_language = selected_lang
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>For informational purposes only.<br/>Always consult your doctor.</p>", unsafe_allow_html=True)
+    st.markdown(
+        "<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>"
+        "For informational purposes only.<br/>Always consult your doctor.</p>",
+        unsafe_allow_html=True,
+    )
 
-# ── DOCUMENT PROCESSING (always runs before rendering) ───────
+
+# ── DOCUMENT PROCESSING ───────────────────────────────────────
 if st.session_state.get("processing_error"):
     st.error(f"❌ {st.session_state.processing_error}")
     if st.button("Clear error"):
@@ -1019,7 +1008,9 @@ if st.session_state.get("processing"):
     for file_info in st.session_state.get("files_to_process", []):
         suffix = Path(file_info["name"]).suffix
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            tmp.write(file_info["data"]); tmp_paths.append(tmp.name); original_names.append(file_info["name"])
+            tmp.write(file_info["data"])
+            tmp_paths.append(tmp.name)
+            original_names.append(file_info["name"])
     try:
         if st.session_state.chroma_dir and os.path.exists(st.session_state.chroma_dir):
             shutil.rmtree(st.session_state.chroma_dir, ignore_errors=True)
@@ -1036,62 +1027,67 @@ if st.session_state.get("processing"):
         st.session_state.processing_error = str(e)
     finally:
         for path in tmp_paths:
-            if os.path.exists(path): os.unlink(path)
+            if os.path.exists(path):
+                os.unlink(path)
     st.session_state.processing = False
     st.session_state.files_to_process = []
     st.rerun()
 
 
 # ── TOP NAVBAR ────────────────────────────────────────────────
-mood_emoji_map = {"Happy":"😊","Relieved":"😌","Patient":"🏥","Sad":"😔","Neutral":"😐","Anxious":"😟","Irritable":"😤","Tired":"😴","Strong":"💪","Unwell":"🤒","Calm":"🧘","Confused":"😕"}
-user_display = f"{mood_emoji_map.get(st.session_state.user_mood,'😐')} {st.session_state.user_name}" if st.session_state.user_name else "👤 Guest"
+mood_emoji_map = {
+    "Happy": "😊", "Relieved": "😌", "Patient": "🏥", "Sad": "😔",
+    "Neutral": "😐", "Anxious": "😟", "Irritable": "😤", "Tired": "😴",
+    "Strong": "💪", "Unwell": "🤒", "Calm": "🧘", "Confused": "😕",
+}
+user_display = (
+    f"{mood_emoji_map.get(st.session_state.user_mood, '😐')} {st.session_state.user_name}"
+    if st.session_state.user_name else "👤 Guest"
+)
 
 active_tab = st.session_state.active_tab
 
-# Render navbar HTML (display only)
-agents_active   = "active" if active_tab == "agents"    else ""
-chat_active     = "active" if active_tab == "chat"       else ""
-docs_active     = "active" if active_tab == "documents"  else ""
-
-# ── TOP NAVBAR (pure Streamlit columns, no CSS hacks) ─────────
-st.markdown(f"""
-<div style="background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(74,144,217,0.15);
-    box-shadow:0 2px 20px rgba(13,43,110,0.08);
-    padding:0 32px; height:64px;
-    display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:8px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:26px;">🏥</span>
-        <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#0d2b6e;">MediChat</span>
-    </div>
-    <div style="font-size:13px;color:#2451b3;font-weight:600;
-        background:rgba(74,144,217,0.08);border-radius:20px;padding:6px 14px;">
-        {user_display}
-    </div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    f"<div style='background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);"
+    f"border-bottom:1px solid rgba(74,144,217,0.15);"
+    f"box-shadow:0 2px 20px rgba(13,43,110,0.08);"
+    f"padding:0 32px; height:64px;"
+    f"display:flex;align-items:center;justify-content:space-between;"
+    f"margin-bottom:8px;'>"
+    f"<div style='display:flex;align-items:center;gap:10px;'>"
+    f"<span style='font-size:26px;'>🏥</span>"
+    f"<span style='font-family:Playfair Display,serif;font-size:20px;font-weight:700;color:#0d2b6e;'>MediChat</span>"
+    f"</div>"
+    f"<div style='font-size:13px;color:#2451b3;font-weight:600;"
+    f"background:rgba(74,144,217,0.08);border-radius:20px;padding:6px 14px;'>"
+    f"{user_display}</div></div>",
+    unsafe_allow_html=True,
+)
 
 nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns([2, 1, 1, 1, 2])
 with nav_c2:
-    if st.button("🤖 Agents", key="nav_agents", use_container_width=True,
-                 type="primary" if active_tab == "agents" else "secondary"):
+    if st.button(
+        "🤖 Agents", key="nav_agents", use_container_width=True,
+        type="primary" if active_tab == "agents" else "secondary",
+    ):
         st.session_state.active_tab = "agents"
         st.session_state.active_agent = None
         st.session_state.agent_result = None
         st.rerun()
 with nav_c3:
-    if st.button("💬 Chat", key="nav_chat", use_container_width=True,
-                 type="primary" if active_tab == "chat" else "secondary"):
+    if st.button(
+        "💬 Chat", key="nav_chat", use_container_width=True,
+        type="primary" if active_tab == "chat" else "secondary",
+    ):
         st.session_state.active_tab = "chat"
         st.rerun()
 with nav_c4:
-    if st.button("📁 Docs", key="nav_docs", use_container_width=True,
-                 type="primary" if active_tab == "documents" else "secondary"):
+    if st.button(
+        "📁 Docs", key="nav_docs", use_container_width=True,
+        type="primary" if active_tab == "documents" else "secondary",
+    ):
         st.session_state.active_tab = "documents"
         st.rerun()
-
-
 
 
 # ── Main content ──────────────────────────────────────────────
@@ -1104,11 +1100,10 @@ with main_col:
     # ══════════════════════════════════════════════════════════
     if active_tab == "agents":
 
-        # Hero header — always visible
         st.markdown("""
-        <div class="agents-hero">
-            <h1>🤖 AI Medical Agents</h1>
-            <p>Powerful tools that analyse your documents and extract insights automatically</p>
+        <div class="agents-hero" style="text-align:center;padding:36px 0 28px;">
+            <h1 style="font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:#0d2b6e;margin:0 0 8px;">🤖 AI Medical Agents</h1>
+            <p style="font-size:15px;color:#5a7abf;margin:0;font-weight:500;">Powerful tools that analyse your documents and extract insights automatically</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1120,38 +1115,32 @@ with main_col:
             "💊 Medication Agent":     ("💊", "#2eaa5e"),
             "📅 Appointment Reminder": ("📅", "#d97b4a"),
             "📧 Email Report":         ("📧", "#c72563"),
-            "🩻 Image Explainer":      ("🩻", "#0a9396"),  # ← add this
+            "🩻 Image Explainer":      ("🩻", "#0a9396"),
         }
         status_style = {
-            "done":    ("✅ Done",      "#2eaa5e", "#edfdf4"),
-            "running": ("⏳ Running…",  "#d97b4a", "#fff8f0"),
-            "pending": ("🕐 Pending…",  "#4a90d9", "#f0f4ff"),
-            "waiting": ("⏸ Waiting…",  "#c72563", "#fff0f5"),
-            "":        ("— Not run",   "#aab8d4", "#f5f7ff"),
+            "done":    ("✅ Done",     "#2eaa5e", "#edfdf4"),
+            "running": ("⏳ Running…", "#d97b4a", "#fff8f0"),
+            "pending": ("🕐 Pending…", "#4a90d9", "#f0f4ff"),
+            "waiting": ("⏸ Waiting…", "#c72563", "#fff0f5"),
+            "":        ("— Not run",  "#aab8d4", "#f5f7ff"),
         }
 
-        # ── No documents yet ─────────────────────────────────
         if st.session_state.retriever is None:
             st.markdown("""
-            <div style="text-align:center; margin:16px auto 32px; padding:40px 32px;
-                background:white; border-radius:24px; max-width:520px;
+            <div style="text-align:center;margin:16px auto 32px;padding:40px 32px;
+                background:white;border-radius:24px;max-width:520px;
                 box-shadow:0 4px 24px rgba(13,43,110,0.08);
                 border:2px dashed rgba(74,144,217,0.25);">
-                <div style="font-size:52px; margin-bottom:16px;">📂</div>
-                <p style="color:#0d2b6e; font-size:17px; font-weight:700; margin:0 0 8px;">
-                    No documents loaded yet
-                </p>
-                <p style="color:#5a7abf; font-size:14px; margin:0; line-height:1.6;">
-                    Upload your medical documents from the sidebar,<br>
-                    then come back here to run the agents.
+                <div style="font-size:52px;margin-bottom:16px;">📂</div>
+                <p style="color:#0d2b6e;font-size:17px;font-weight:700;margin:0 0 8px;">No documents loaded yet</p>
+                <p style="color:#5a7abf;font-size:14px;margin:0;line-height:1.6;">
+                    Upload your medical documents from the sidebar,<br>then come back here to run the agents.
                 </p>
             </div>
             """, unsafe_allow_html=True)
 
-        # ── Viewing a single agent result ────────────────────
         elif st.session_state.active_agent is not None:
 
-            # Run agent if needed
             if st.session_state.agent_running and st.session_state.agent_result is None:
                 with st.spinner(f"Running {st.session_state.active_agent}…"):
                     try:
@@ -1180,18 +1169,15 @@ with main_col:
                 agent_name = st.session_state.active_agent
                 descriptions = orchestrator.agent_descriptions
 
-                # ── Email agent gets Gmail-style UI ──────────
                 if agent_name == "📧 Email Report":
-                    st.markdown(f"""
-                    <div class="agent-result-panel">
-                        <div class="agent-result-header">{agent_name}</div>
-                        <div class="agent-result-sub">{descriptions.get(agent_name, '')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div class='agent-result-panel'>"
+                        f"<div class='agent-result-header'>{agent_name}</div>"
+                        f"<div class='agent-result-sub'>{descriptions.get(agent_name, '')}</div>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
 
-                    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-                    # Gmail-style compose window
                     st.markdown("""
                     <div style="background:white;border-radius:16px;overflow:hidden;
                         box-shadow:0 4px 24px rgba(13,43,110,0.12);
@@ -1200,15 +1186,14 @@ with main_col:
                             display:flex;align-items:center;justify-content:space-between;">
                             <span style="font-size:13px;font-weight:600;color:#fff;">New message</span>
                             <div style="display:flex;gap:14px;">
-                                <span style="color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">—</span>
-                                <span style="color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">⛶</span>
-                                <span style="color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;">✕</span>
+                                <span style="color:rgba(255,255,255,0.7);font-size:16px;">—</span>
+                                <span style="color:rgba(255,255,255,0.7);font-size:16px;">⛶</span>
+                                <span style="color:rgba(255,255,255,0.7);font-size:16px;">✕</span>
                             </div>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # To field
                     st.markdown("""
                     <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
                         border-right:0.5px solid rgba(74,144,217,0.2);
@@ -1227,7 +1212,6 @@ with main_col:
                     )
                     st.session_state.recipient_email = recipient_email
 
-                    # Subject field
                     st.markdown("""
                     <div style="background:white;border-left:0.5px solid rgba(74,144,217,0.2);
                         border-right:0.5px solid rgba(74,144,217,0.2);
@@ -1244,7 +1228,6 @@ with main_col:
                         key="email_subject_main",
                     )
 
-                    # Body — parse draft from agent result
                     draft_body = st.session_state.agent_result
                     lines = draft_body.split("\n")
                     body_lines = []
@@ -1259,7 +1242,6 @@ with main_col:
                             continue
                         if clean.lower().startswith(skip_prefixes):
                             continue
-                        # Start body only when we hit the salutation
                         if clean.lower().startswith("dear"):
                             found_body = True
                         if found_body:
@@ -1281,14 +1263,6 @@ with main_col:
                         label_visibility="collapsed",
                         key="email_body_main",
                     )
-
-                    # Bottom bar with Send button
-                    st.markdown("""
-                    <div style="background:white;border:0.5px solid rgba(74,144,217,0.2);
-                        border-top:none;border-radius:0 0 16px 16px;
-                        padding:10px 18px;display:flex;align-items:center;gap:10px;">
-                    </div>
-                    """, unsafe_allow_html=True)
 
                     send_col, dl_col, back_col = st.columns([2, 1, 1])
                     with send_col:
@@ -1324,28 +1298,29 @@ with main_col:
                             st.session_state.agent_result = None
                             st.rerun()
 
-                # ── All other agents ─────────────────────────
                 else:
-                    st.markdown(f"""
-                    <div class="agent-result-panel">
-                        <div class="agent-result-header">{agent_name}</div>
-                        <div class="agent-result-sub">{descriptions.get(agent_name, '')}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div class='agent-result-panel'>"
+                        f"<div class='agent-result-header'>{agent_name}</div>"
+                        f"<div class='agent-result-sub'>{descriptions.get(agent_name, '')}</div>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
 
                     if agent_name == "📅 Appointment Reminder":
                         _render_appointment(st.session_state.agent_result)
                     else:
                         st.markdown(st.session_state.agent_result)
-                    st.markdown("<br>", unsafe_allow_html=True)
 
+                    st.markdown("<br>", unsafe_allow_html=True)
                     c1, c2, c3 = st.columns([1, 1, 1])
                     with c1:
                         st.download_button(
                             label="📄 Download Result",
                             data=st.session_state.agent_result.encode("utf-8"),
-                            file_name=f"medichat_{agent_name.replace(' ','_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
-                            mime="text/plain", use_container_width=True,
+                            file_name=f"medichat_{agent_name.replace(' ', '_').lower()}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                            mime="text/plain",
+                            use_container_width=True,
                         )
                     with c2:
                         if st.button("🔄 Run Again", use_container_width=True):
@@ -1358,9 +1333,7 @@ with main_col:
                             st.session_state.agent_result = None
                             st.rerun()
 
-        # ── Agent grid — landing (documents loaded) ──────────
         else:
-            # ── Run All Agents ────────────────────────────────
             col_l, col_btn, col_r = st.columns([2, 2, 2])
             with col_btn:
                 if st.button("⚡ Run All Agents", use_container_width=True, key="run_all"):
@@ -1401,8 +1374,6 @@ with main_col:
                     st.session_state.run_all_triggered = False
                     st.rerun()
 
-
-                # All done
                 all_done = all(
                     st.session_state.agent_statuses.get(a) in ("done", "waiting")
                     for a in orchestrator.agent_names
@@ -1410,7 +1381,6 @@ with main_col:
                 if all_done:
                     st.session_state.run_all_triggered = False
 
-            # ── If Run All results exist, show in tabs ────────
             if st.session_state.all_agents_results:
                 st.markdown("<br>", unsafe_allow_html=True)
                 result_tabs = st.tabs(list(st.session_state.all_agents_results.keys()))
@@ -1419,8 +1389,11 @@ with main_col:
                         st.markdown(ares)
                 st.markdown("---")
 
-            # ── Agent cards grid ──────────────────────────────
-            st.markdown("<p style='text-align:center; color:#5a7abf; font-size:14px; margin:8px 0 20px;'>Click a card to run a single agent</p>", unsafe_allow_html=True)
+            st.markdown(
+                "<p style='text-align:center;color:#5a7abf;font-size:14px;margin:8px 0 20px;'>"
+                "Click a card to run a single agent</p>",
+                unsafe_allow_html=True,
+            )
 
             agents_list = list(orchestrator.agent_descriptions.items())
             row1 = st.columns(3)
@@ -1433,18 +1406,17 @@ with main_col:
                 status_label, status_color, status_bg = status_style.get(status_key, status_style[""])
                 if agent_name == "📧 Email Report" and status_key == "done":
                     status_label = "📝 Draft Ready"
-                done_border = "rgba(46,170,94,0.4)" if status_key == "done" else "rgba(74,144,217,0.12)"
 
                 with grid_cols[idx]:
-                    st.markdown(f"""
-                    <div class="agent-grid-card {'done' if status_key=='done' else ''}">
-                        <div class="agent-card-status" style="background:{status_bg}; color:{status_color};">{status_label}</div>
-                        <span class="agent-card-icon">{icon}</span>
-                        <div class="agent-card-name">{agent_name}</div>
-                        <div class="agent-card-desc">{agent_desc}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
+                    st.markdown(
+                        f"<div class='agent-grid-card {'done' if status_key == 'done' else ''}'>"
+                        f"<div class='agent-card-status' style='background:{status_bg};color:{status_color};'>{status_label}</div>"
+                        f"<span class='agent-card-icon'>{icon}</span>"
+                        f"<div class='agent-card-name'>{agent_name}</div>"
+                        f"<div class='agent-card-desc'>{agent_desc}</div>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
                     btn_label = "✅ View Result" if status_key == "done" else "▶ Run Agent"
                     if st.button(btn_label, key=f"card_btn_{agent_name}", use_container_width=True):
                         st.session_state.active_tab = "agents"
@@ -1463,7 +1435,6 @@ with main_col:
     # ══════════════════════════════════════════════════════════
     elif active_tab == "chat":
 
-        # Render all messages
         for message in st.session_state.chat_history:
             if message["role"] == "user":
                 st.markdown(
@@ -1500,15 +1471,23 @@ with main_col:
                 box-shadow:0 4px 20px rgba(13,43,110,0.08);
                 border:1.5px dashed rgba(74,144,217,0.3);">
                 <div style="font-size:44px;margin-bottom:12px;">📤</div>
-                <p style="color:#0d2b6e;font-size:16px;font-weight:700;margin:0 0 6px;">
-                    No documents loaded
-                </p>
+                <p style="color:#0d2b6e;font-size:16px;font-weight:700;margin:0 0 6px;">No documents loaded</p>
                 <p style="color:#5a7abf;font-size:14px;margin:0;line-height:1.6;">
                     Upload your medical documents from the sidebar to start chatting.
                 </p>
             </div>
             """, unsafe_allow_html=True)
+
         else:
+            # ── Voice input (hidden text field + JS mic button) ───
+            # NOTE: The JS is in a plain string (not f-string) to avoid brace-escaping issues.
+            # The two dynamic values (recognition_lang, current_ui_lang) are injected via
+            # str.replace() on the plain string before passing to components.html().
+
+            current_ui_lang = st.session_state.get("user_language", "English")
+            lang_code_map = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
+            recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
+
             voice_transcript = st.text_input(
                 "voice_hidden",
                 value="",
@@ -1516,7 +1495,6 @@ with main_col:
                 label_visibility="collapsed",
             )
 
-            # Hide the text input visually
             st.markdown("""
             <style>
             div[data-testid="stTextInput"]:has(input[aria-label="voice_hidden"]) {
@@ -1530,14 +1508,11 @@ with main_col:
             </style>
             """, unsafe_allow_html=True)
 
-
-            current_ui_lang = st.session_state.get("user_language", "English")
-            lang_code_map = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
-            recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
-
-            # Mic button + JS — injected via components.html (display only, no return needed)
-            components.html(
-                f"""
+            # Build the HTML/JS as a plain string — NO f-string — then substitute
+            # the two dynamic values with a simple str.replace so we never have to
+            # worry about escaping every JS brace pair.
+            voice_html = (
+                """
                 <div style="display:flex;align-items:center;justify-content:flex-end;
                     padding:4px 4px 2px;gap:10px;">
 
@@ -1546,7 +1521,7 @@ with main_col:
                         font-family:'Nunito',sans-serif;
                         opacity:0;transition:opacity 0.3s;
                         font-style:italic;">
-                        Listening…
+                        Listening\u2026
                     </span>
 
                     <button id="mic-btn" onclick="toggleVoice()" title="Voice input"
@@ -1567,111 +1542,106 @@ with main_col:
                 </div>
 
                 <script>
-                const RECOGNITION_LANG = "{recognition_lang}";
-                let recognition = null;
-                let isListening  = false;
+                var RECOGNITION_LANG = "___RECOGNITION_LANG___";
+                var CURRENT_UI_LANG  = "___CURRENT_UI_LANG___";
 
-                const LANG_MAP = {{
+                var LANG_MAP = {
                     'hi': 'Hindi', 'hi-in': 'Hindi',
                     'ml': 'Malayalam', 'ml-in': 'Malayalam',
                     'en': 'English', 'en-us': 'English',
-                    'en-in': 'English', 'en-gb': 'English',
-                }};
+                    'en-in': 'English', 'en-gb': 'English'
+                };
 
-                function detectLang(code) {{
+                function detectLang(code) {
                     if (!code) return 'English';
-                    const lower = code.toLowerCase();
-                    return LANG_MAP[lower] || LANG_MAP[lower.split('-')[0]] || '{current_ui_lang}';
-                }}
+                    var lower = code.toLowerCase();
+                    return LANG_MAP[lower] || LANG_MAP[lower.split('-')[0]] || CURRENT_UI_LANG;
+                }
 
-                // Find Streamlit's hidden text input in the parent frame and set its value,
-                // then fire React's synthetic onChange so Streamlit picks it up.
-                function setStreamlitInput(value) {{
-                    const inputs = window.parent.document.querySelectorAll('input[type="text"]');
-                    for (const inp of inputs) {{
-                        // Our hidden input has aria-label matching its label
+                var recognition = null;
+                var isListening  = false;
+
+                function setStreamlitInput(value) {
+                    var inputs = window.parent.document.querySelectorAll('input[type="text"]');
+                    for (var i = 0; i < inputs.length; i++) {
+                        var inp = inputs[i];
                         if (inp.getAttribute('aria-label') === 'voice_hidden') {
-                            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
                                 window.HTMLInputElement.prototype, 'value'
                             ).set;
                             nativeInputValueSetter.call(inp, value);
-                                inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            inp.dispatchEvent(new Event('input', { bubbles: true }));
                             break;
                         }
-                    }}
-                }}
+                    }
+                }
 
-                function toggleVoice() {{
-                    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (!SR) {{
+                function toggleVoice() {
+                    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (!SR) {
                         alert('Voice input needs Chrome or Edge. Please switch browsers.');
                         return;
-                    }}
+                    }
 
-                    if (isListening) {{
+                    if (isListening) {
                         recognition.stop();
                         return;
-                    }}
+                    }
 
                     recognition = new SR();
                     recognition.continuous     = false;
                     recognition.interimResults = false;
                     recognition.lang           = RECOGNITION_LANG;
 
-                   recognition.onstart = () => {{
+                    recognition.onstart = function() {
                         isListening = true;
-                        const btn  = document.getElementById('mic-btn');
-                        const icon = document.getElementById('mic-icon');
+                        var btn  = document.getElementById('mic-btn');
+                        var icon = document.getElementById('mic-icon');
                         btn.style.background   = '#fef2f2';
                         btn.style.borderColor  = '#ef4444';
                         btn.style.boxShadow    = '0 2px 12px rgba(239,68,68,0.35)';
                         icon.setAttribute('stroke', '#ef4444');
                         document.getElementById('voice-status').style.opacity = '1';
-                    }};
+                    };
 
-                    recognition.onresult = (e) => {{
-                        const transcript = e.results[0][0].transcript.trim();
-
-                        // Try to get detected language from the result
-                        // (Chrome exposes this on the SpeechRecognitionResult)
-                        let rawLang = '';
-                        try { rawLang = e.results[0][0].lang || ''; } catch(_) {}
-
-                        const detectedLang = detectLang(rawLang);
-
-                        // Bundle transcript + lang into JSON and write to the hidden input
-                        const payload = JSON.stringify({{ text: transcript, lang: detectedLang }});
+                    recognition.onresult = function(e) {
+                        var transcript = e.results[0][0].transcript.trim();
+                        var rawLang = '';
+                        try { rawLang = e.results[0][0].lang || ''; } catch(err) {}
+                        var detectedLang = detectLang(rawLang);
+                        var payload = JSON.stringify({ text: transcript, lang: detectedLang });
                         setStreamlitInput(payload);
-                    }};
+                    };
 
-                    recognition.onerror = (e) => {{
+                    recognition.onerror = function(e) {
                         console.warn('Speech recognition error:', e.error);
                         stopListening();
-                    }};
+                    };
 
                     recognition.onend = stopListening;
-
                     recognition.start();
-                }}
+                }
 
-                function stopListening() {{
+                function stopListening() {
                     isListening = false;
-                    const btn  = document.getElementById('mic-btn');
-                    const icon = document.getElementById('mic-icon');
+                    var btn  = document.getElementById('mic-btn');
+                    var icon = document.getElementById('mic-icon');
                     btn.style.background  = 'white';
                     btn.style.borderColor = '#4a90d9';
                     btn.style.boxShadow   = '0 2px 8px rgba(74,144,217,0.2)';
                     icon.setAttribute('stroke', '#4a90d9');
                     document.getElementById('voice-status').style.opacity = '0';
-                }}
+                }
                 </script>
-                """,
-                height=58,
+                """
+                .replace("___RECOGNITION_LANG___", recognition_lang)
+                .replace("___CURRENT_UI_LANG___", current_ui_lang)
             )
 
-            # ── Process voice transcript if received ──────────────
+            components.html(voice_html, height=58)
+
+            # ── Process voice transcript if received ──────────
             if voice_transcript and voice_transcript.strip():
-                # Clear it immediately so it doesn't re-fire on next rerun
                 st.session_state.voice_input_field = ""
                 try:
                     import json as _json
@@ -1679,12 +1649,10 @@ with main_col:
                     voice_text = payload.get("text", "").strip()
                     voice_lang = payload.get("lang", "English")
                 except Exception:
-                    # Fallback: treat raw string as plain transcript
                     voice_text = voice_transcript.strip()
                     voice_lang = st.session_state.get("user_language", "English")
 
                 if voice_text:
-                    # Auto-switch language if different from current
                     current_lang = st.session_state.get("user_language", "English")
                     if voice_lang != current_lang and voice_lang in ["English", "Hindi", "Malayalam"]:
                         st.session_state.user_language = voice_lang
@@ -1698,7 +1666,6 @@ with main_col:
                         )
                         st.session_state.chat_history.append({"role": "assistant", "content": ack})
 
-                    # Send through same pipeline as typed questions
                     history_before = list(st.session_state.chat_history)
                     st.session_state.chat_history.append({"role": "user", "content": voice_text})
                     with st.spinner("Reading your documents…"):
@@ -1721,7 +1688,7 @@ with main_col:
                     st.session_state.chat_history.append({"role": "assistant", "content": answer})
                     st.rerun()
 
-            # ── Text chat input ───────────────────────────────────
+            # ── Text chat input ───────────────────────────────
             user_question = st.chat_input("Ask about your medical documents…")
             if user_question:
                 history_before = list(st.session_state.chat_history)
@@ -1746,14 +1713,13 @@ with main_col:
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
 
-
     # ══════════════════════════════════════════════════════════
     #  DOCUMENTS TAB
     # ══════════════════════════════════════════════════════════
     elif active_tab == "documents":
 
         st.markdown("""
-        <div style="padding: 32px 0 8px;">
+        <div style="padding:32px 0 8px;">
             <div class="docs-section-title">📁 Your Documents</div>
             <div class="docs-section-sub">All uploaded and processed medical files</div>
         </div>
@@ -1766,9 +1732,7 @@ with main_col:
                 box-shadow:0 4px 24px rgba(13,43,110,0.08);
                 border:2px dashed rgba(74,144,217,0.25);">
                 <div style="font-size:52px;margin-bottom:16px;">📂</div>
-                <p style="color:#0d2b6e;font-size:17px;font-weight:700;margin:0 0 8px;">
-                    No documents uploaded yet
-                </p>
+                <p style="color:#0d2b6e;font-size:17px;font-weight:700;margin:0 0 8px;">No documents uploaded yet</p>
                 <p style="color:#5a7abf;font-size:14px;margin:0;line-height:1.6;">
                     Use the sidebar to upload PDF, DOCX, image, or text files.<br>
                     Once processed, they'll appear here.
@@ -1778,20 +1742,26 @@ with main_col:
         else:
             for doc_name in st.session_state.uploaded_names:
                 ext = Path(doc_name).suffix.lower()
-                ext_icon = {"pdf":"📄","docx":"📝","jpg":"🖼️","jpeg":"🖼️","png":"🖼️","webp":"🖼️","txt":"📃"}.get(ext.lstrip("."), "📄")
-                st.markdown(f"""
-                <div class="doc-card">
-                    <div class="doc-card-icon">{ext_icon}</div>
-                    <div>
-                        <div class="doc-card-name">{html.escape(doc_name)}</div>
-                        <div class="doc-card-status">✅ Processed &amp; indexed</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                ext_icon = {
+                    "pdf": "📄", "docx": "📝", "jpg": "🖼️", "jpeg": "🖼️",
+                    "png": "🖼️", "webp": "🖼️", "txt": "📃",
+                }.get(ext.lstrip("."), "📄")
+                st.markdown(
+                    f"<div class='doc-card'>"
+                    f"<div class='doc-card-icon'>{ext_icon}</div>"
+                    f"<div>"
+                    f"<div class='doc-card-name'>{html.escape(doc_name)}</div>"
+                    f"<div class='doc-card-status'>✅ Processed &amp; indexed</div>"
+                    f"</div></div>",
+                    unsafe_allow_html=True,
+                )
 
             if st.session_state.get("summaries"):
                 st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown('<div class="docs-section-title" style="font-size:20px;">📋 Document Summaries</div>', unsafe_allow_html=True)
+                st.markdown(
+                    '<div class="docs-section-title" style="font-size:20px;">📋 Document Summaries</div>',
+                    unsafe_allow_html=True,
+                )
                 for doc_name, summary in st.session_state.summaries.items():
                     with st.expander(f"📄 {doc_name}", expanded=False):
                         st.markdown(summary)
