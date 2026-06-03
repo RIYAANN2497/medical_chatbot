@@ -1613,8 +1613,16 @@ with main_col:
                   var text = ta.value.trim();
                   if (!text) return;
                   var encoded = encodeURIComponent(text);
-                  window.parent.location.href =
-                    window.parent.location.pathname + '?mc_msg=' + encoded;
+                  try {{
+                    window.parent.location.href =
+                      window.parent.location.pathname + '?mc_msg=' + encoded;
+                  }} catch(e) {{
+                    try {{
+                      window.parent.location.replace('?mc_msg=' + encoded);
+                    }} catch(e2) {{
+                      window.location.href = '?mc_msg=' + encoded;
+                    }}
+                  }}
                 }}
 
                 function toggleMic() {{
@@ -1649,6 +1657,10 @@ with main_col:
                 sendBtn.addEventListener('click', function(e) {{
                   e.preventDefault();
                   e.stopPropagation();
+                  sendBtn.style.background = 'green';
+                  setTimeout(function() {{
+                    sendBtn.style.background = '';
+                  }}, 300);
                   sendMsg();
                 }});
                 </script>
