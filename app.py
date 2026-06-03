@@ -1477,167 +1477,166 @@ with main_col:
                 </p>
             </div>
             """, unsafe_allow_html=True)
-
+            
         else:
             current_ui_lang = st.session_state.get("user_language", "English")
-            lang_code_map = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
+            lang_code_map   = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
             recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
 
-            # ── Mic button overlaid inside the chat input bar via CSS ──
-            st.markdown("""
+            bridge_val = st.text_input(
+                "voice_bridge",
+                value="",
+                key="voice_msg_bridge",
+                label_visibility="collapsed",
+            )
+
+            chat_bar_html = f"""
             <style>
-            /* Push the chat input left to make room for mic */
-            [data-testid="stChatInput"] textarea {
-                padding-right: 56px !important;
-            }
-            /* Mic button floated inside the bar */
-            #mic-float-btn {
-                position: fixed;
-                bottom: 22px;
-                right: 80px;
-                z-index: 9999;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                border: none;
-                background: transparent;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s ease;
-            }
-            #mic-float-btn:hover { transform: scale(1.1); }
-            #mic-float-btn.listening svg { stroke: #ef4444 !important; }
-            #mic-status-badge {
-                position: fixed;
-                bottom: 68px;
-                right: 60px;
-                z-index: 9999;
-                background: #ef4444;
-                color: white;
-                font-size: 11px;
-                font-family: 'Nunito', sans-serif;
-                font-weight: 700;
-                padding: 3px 10px;
+              * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+              body {{ background: transparent; font-family: 'Nunito', sans-serif; }}
+              .bar-wrap {{
+                display: flex; align-items: center;
+                background: #ffffff;
+                border: 2px solid rgba(74,144,217,0.30);
                 border-radius: 20px;
-                display: none;
-                animation: pulse-badge 1s infinite;
-            }
-            @keyframes pulse-badge {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.5; }
-            }
+                box-shadow: 0 4px 24px rgba(13,43,110,0.10);
+                padding: 6px 8px 6px 16px; gap: 6px;
+                transition: border-color 0.25s, box-shadow 0.25s;
+              }}
+              .bar-wrap:focus-within {{
+                border-color: #4a90d9;
+                box-shadow: 0 4px 24px rgba(74,144,217,0.25);
+              }}
+              textarea {{
+                flex: 1; border: none; outline: none; resize: none;
+                font-family: 'Nunito', sans-serif; font-size: 15px;
+                color: #1a2b5e; background: transparent;
+                line-height: 1.5; max-height: 120px; overflow-y: auto; padding: 4px 0;
+              }}
+              textarea::placeholder {{ color: #8aaee0; }}
+              .icon-btn {{
+                width: 38px; height: 38px; border-radius: 50%; border: none;
+                cursor: pointer; display: flex; align-items: center; justify-content: center;
+                flex-shrink: 0; transition: all 0.2s ease; background: transparent;
+              }}
+              .icon-btn:hover {{ transform: scale(1.1); }}
+              #mic-btn {{ background: rgba(74,144,217,0.08); }}
+              #mic-btn.listening {{
+                background: rgba(239,68,68,0.12);
+                animation: mic-pulse 1s infinite;
+              }}
+              @keyframes mic-pulse {{
+                0%,100% {{ box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }}
+                50%      {{ box-shadow: 0 0 0 6px rgba(239,68,68,0); }}
+              }}
+              #send-btn {{
+                background: linear-gradient(135deg, #4a90d9, #2563c7);
+                box-shadow: 0 2px 8px rgba(37,99,199,0.30);
+              }}
+              #send-btn:hover {{ box-shadow: 0 4px 14px rgba(37,99,199,0.45); }}
+              #send-btn:disabled {{ opacity: 0.45; cursor: default; transform: none; }}
             </style>
 
-            <div id="mic-status-badge">🎙 Listening…</div>
+            <div class="bar-wrap">
+              <textarea id="chat-ta" rows="1"
+                placeholder="Ask about your medical documents…"></textarea>
 
-            <button id="mic-float-btn" onclick="toggleMic()" title="Voice input">
-                <svg id="mic-svg" width="22" height="22" viewBox="0 0 24 24"
+              <button class="icon-btn" id="mic-btn" title="Voice input" onclick="toggleMic()">
+                <svg id="mic-svg" width="20" height="20" viewBox="0 0 24 24"
                     fill="none" stroke="#4a90d9" stroke-width="2.2"
                     stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="2" width="6" height="11" rx="3"/>
-                    <path d="M5 10a7 7 0 0 0 14 0"/>
-                    <line x1="12" y1="17" x2="12" y2="22"/>
-                    <line x1="8" y1="22" x2="16" y2="22"/>
+                  <rect x="9" y="2" width="6" height="11" rx="3"/>
+                  <path d="M5 10a7 7 0 0 0 14 0"/>
+                  <line x1="12" y1="17" x2="12" y2="22"/>
+                  <line x1="8" y1="22" x2="16" y2="22"/>
                 </svg>
-            </button>
-            """, unsafe_allow_html=True)
+              </button>
 
-            # Voice result goes into this visible text input (above chat bar)
-            # which the user can edit before sending
-            if "voice_pending" not in st.session_state:
-                st.session_state.voice_pending = ""
+              <button class="icon-btn" id="send-btn" title="Send" onclick="sendMsg()" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24"
+                    fill="none" stroke="#ffffff" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
 
-            voice_input_val = st.session_state.get("voice_pending", "")
+            <script>
+            (function() {{
+              var REC_LANG = "{recognition_lang}";
+              var ta      = document.getElementById('chat-ta');
+              var sendBtn = document.getElementById('send-btn');
+              var micBtn  = document.getElementById('mic-btn');
+              var micSvg  = document.getElementById('mic-svg');
+              var recog   = null;
+              var listening = false;
 
-            # Inject the JS — plain string, no f-string, values replaced safely
-            voice_js = (
-                """
-                <script>
-                var REC_LANG = "___REC_LANG___";
-                var UI_LANG  = "___UI_LANG___";
-                var recog = null;
-                var listening = false;
+              ta.addEventListener('input', function() {{
+                ta.style.height = 'auto';
+                ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+                sendBtn.disabled = ta.value.trim() === '';
+              }});
 
-                var LANG_MAP = {
-                    'hi':'Hindi','hi-in':'Hindi',
-                    'ml':'Malayalam','ml-in':'Malayalam',
-                    'en':'English','en-us':'English',
-                    'en-in':'English','en-gb':'English'
-                };
+              ta.addEventListener('keydown', function(e) {{
+                if (e.key === 'Enter' && !e.shiftKey) {{ e.preventDefault(); sendMsg(); }}
+              }});
 
-                function detectLang(code) {
-                    if (!code) return UI_LANG;
-                    var l = code.toLowerCase();
-                    return LANG_MAP[l] || LANG_MAP[l.split('-')[0]] || UI_LANG;
-                }
+              function sendMsg() {{
+                var text = ta.value.trim();
+                if (!text) return;
+                var stInput = window.parent.document.querySelector(
+                  'input[aria-label="voice_bridge"]'
+                );
+                if (stInput) {{
+                  var nativeSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype, 'value'
+                  ).set;
+                  nativeSetter.call(stInput, text);
+                  stInput.dispatchEvent(new Event('input', {{bubbles: true}}));
+                }}
+                ta.value = '';
+                ta.style.height = 'auto';
+                sendBtn.disabled = true;
+              }}
 
-                function findChatInput() {
-                    var textareas = window.parent.document.querySelectorAll('textarea');
-                    for (var i = 0; i < textareas.length; i++) {
-                        if (textareas[i].placeholder && textareas[i].placeholder.indexOf('medical') !== -1) {
-                            return textareas[i];
-                        }
-                    }
-                    return null;
-                }
+              function toggleMic() {{
+                var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) {{ alert('Voice input requires Chrome or Edge.'); return; }}
+                if (listening) {{ recog.stop(); return; }}
+                recog = new SR();
+                recog.lang = REC_LANG;
+                recog.continuous = false;
+                recog.interimResults = false;
+                recog.onstart = function() {{
+                  listening = true;
+                  micBtn.classList.add('listening');
+                  micSvg.setAttribute('stroke', '#ef4444');
+                }};
+                recog.onresult = function(e) {{
+                  var text = e.results[0][0].transcript.trim();
+                  ta.value = text;
+                  ta.style.height = 'auto';
+                  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+                  sendBtn.disabled = false;
+                  ta.focus();
+                }};
+                recog.onerror = recog.onend = function() {{
+                  listening = false;
+                  micBtn.classList.remove('listening');
+                  micSvg.setAttribute('stroke', '#4a90d9');
+                }};
+                recog.start();
+              }}
+            }})();
+            </script>
+            """
 
-                function setChatInputValue(text) {
-                    var ta = findChatInput();
-                    if (!ta) return;
-                    var setter = Object.getOwnPropertyDescriptor(
-                        window.HTMLTextAreaElement.prototype, 'value'
-                    ).set;
-                    setter.call(ta, text);
-                    ta.dispatchEvent(new Event('input', {bubbles: true}));
-                    ta.focus();
-                }
+            components.html(chat_bar_html, height=72)
 
-                function toggleMic() {
-                    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (!SR) {
-                        alert('Voice input requires Chrome or Edge.');
-                        return;
-                    }
-                    if (listening) { recog.stop(); return; }
-
-                    recog = new SR();
-                    recog.lang = REC_LANG;
-                    recog.continuous = false;
-                    recog.interimResults = false;
-
-                    recog.onstart = function() {
-                        listening = true;
-                        document.getElementById('mic-svg').setAttribute('stroke','#ef4444');
-                        document.getElementById('mic-status-badge').style.display = 'block';
-                    };
-
-                    recog.onresult = function(e) {
-                        var text = e.results[0][0].transcript.trim();
-                        setChatInputValue(text);
-                    };
-
-                    recog.onerror = function() { stopMic(); };
-                    recog.onend   = function() { stopMic(); };
-                    recog.start();
-                }
-
-                function stopMic() {
-                    listening = false;
-                    document.getElementById('mic-svg').setAttribute('stroke','#4a90d9');
-                    document.getElementById('mic-status-badge').style.display = 'none';
-                }
-                </script>
-                """
-                .replace("___REC_LANG___", recognition_lang)
-                .replace("___UI_LANG___", current_ui_lang)
-            )
-            components.html(voice_js, height=0)
-
-            # ── Text chat input ───────────────────────────────
-            user_question = st.chat_input("Ask about your medical documents…")
+            user_question = bridge_val.strip() if bridge_val else ""
             if user_question:
+                st.session_state["voice_msg_bridge"] = ""
                 history_before = list(st.session_state.chat_history)
                 st.session_state.chat_history.append({"role": "user", "content": user_question})
                 with st.spinner("Reading your documents…"):
