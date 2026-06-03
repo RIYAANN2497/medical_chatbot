@@ -398,6 +398,13 @@ header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
+# ── Handle incoming chat message from iframe BEFORE session state init ──
+_qp = st.query_params
+_pending = _qp.get("mc_msg", "")
+if _pending:
+    st.query_params.clear()
+    if "pending_chat_msg" not in st.session_state:
+        st.session_state["pending_chat_msg"] = _pending
 
 # ── Session state defaults ────────────────────────────────────
 defaults = {
@@ -1483,11 +1490,9 @@ with main_col:
             lang_code_map   = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
             recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
 
-            # Read message from query params (set by the iframe JS)
-            qp = st.query_params
-            pending_msg = qp.get("mc_msg", "")
+            # Read message saved from query param at page top
+            pending_msg = st.session_state.pop("pending_chat_msg", "")
             if pending_msg:
-                st.query_params.clear()
                 history_before = list(st.session_state.chat_history)
                 st.session_state.chat_history.append({"role": "user", "content": pending_msg})
                 with st.spinner("Reading your documents…"):
@@ -1607,7 +1612,6 @@ with main_col:
                 function sendMsg() {{
                   var text = ta.value.trim();
                   if (!text) return;
-                  // Navigate parent to ?mc_msg=... which Streamlit reads as query param
                   var encoded = encodeURIComponent(text);
                   window.parent.location.href =
                     window.parent.location.pathname + '?mc_msg=' + encoded;
