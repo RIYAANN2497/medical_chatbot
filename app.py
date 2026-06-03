@@ -1578,17 +1578,17 @@ with main_col:
                     'en-in': 'English', 'en-gb': 'English',
                 }};
 
-                function detectLang(code) {
+                function detectLang(code) {{
                     if (!code) return 'English';
                     const lower = code.toLowerCase();
                     return LANG_MAP[lower] || LANG_MAP[lower.split('-')[0]] || '{current_ui_lang}';
-                }
+                }}
 
                 // Find Streamlit's hidden text input in the parent frame and set its value,
                 // then fire React's synthetic onChange so Streamlit picks it up.
-                function setStreamlitInput(value) {
+                function setStreamlitInput(value) {{
                     const inputs = window.parent.document.querySelectorAll('input[type="text"]');
-                    for (const inp of inputs) {
+                    for (const inp of inputs) {{
                         // Our hidden input has aria-label matching its label
                         if (inp.getAttribute('aria-label') === 'voice_hidden') {
                             const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
@@ -1598,27 +1598,27 @@ with main_col:
                                 inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
                             break;
                         }
-                    }
-                }
+                    }}
+                }}
 
-                function toggleVoice() {
+                function toggleVoice() {{
                     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (!SR) {
+                    if (!SR) {{
                         alert('Voice input needs Chrome or Edge. Please switch browsers.');
                         return;
-                    }
+                    }}
 
-                    if (isListening) {
+                    if (isListening) {{
                         recognition.stop();
                         return;
-                    }
+                    }}
 
                     recognition = new SR();
                     recognition.continuous     = false;
                     recognition.interimResults = false;
                     recognition.lang           = RECOGNITION_LANG;
 
-                    recognition.onstart = () => {
+                   recognition.onstart = () => {{
                         isListening = true;
                         const btn  = document.getElementById('mic-btn');
                         const icon = document.getElementById('mic-icon');
@@ -1627,9 +1627,9 @@ with main_col:
                         btn.style.boxShadow    = '0 2px 12px rgba(239,68,68,0.35)';
                         icon.setAttribute('stroke', '#ef4444');
                         document.getElementById('voice-status').style.opacity = '1';
-                    };
+                    }};
 
-                    recognition.onresult = (e) => {
+                    recognition.onresult = (e) => {{
                         const transcript = e.results[0][0].transcript.trim();
 
                         // Try to get detected language from the result
@@ -1642,19 +1642,19 @@ with main_col:
                         // Bundle transcript + lang into JSON and write to the hidden input
                         const payload = JSON.stringify({{ text: transcript, lang: detectedLang }});
                         setStreamlitInput(payload);
-                    };
+                    }};
 
-                    recognition.onerror = (e) => {
+                    recognition.onerror = (e) => {{
                         console.warn('Speech recognition error:', e.error);
                         stopListening();
-                    };
+                    }};
 
                     recognition.onend = stopListening;
 
                     recognition.start();
-                }
+                }}
 
-                function stopListening() {
+                function stopListening() {{
                     isListening = false;
                     const btn  = document.getElementById('mic-btn');
                     const icon = document.getElementById('mic-icon');
@@ -1663,7 +1663,7 @@ with main_col:
                     btn.style.boxShadow   = '0 2px 8px rgba(74,144,217,0.2)';
                     icon.setAttribute('stroke', '#4a90d9');
                     document.getElementById('voice-status').style.opacity = '0';
-                }
+                }}
                 </script>
                 """,
                 height=58,
