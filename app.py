@@ -1479,14 +1479,18 @@ with main_col:
                                 model="whisper-large-v3",
                                 language="en",
                             )
+                            # Store without rerunning — let the render continue
                             st.session_state["prefill_input"] = transcription.text
-                            st.rerun()
                         except Exception as e:
                             st.error(f"Transcription failed: {e}")
 
             # ── Text input ────────────────────────────────────
             prefill = st.session_state.pop("prefill_input", "")
-            user_input = st.chat_input(prefill if prefill else "Ask about your medical documents…")
+            user_input = st.chat_input("Ask about your medical documents…")
+
+            # Use transcribed text if no manual input this frame
+            if not user_input and prefill:
+                user_input = prefill
 
             # Auto-send transcribed voice message
             if prefill and not user_input:
