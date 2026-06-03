@@ -270,17 +270,6 @@ header { visibility: hidden; }
     border-radius: 12px !important;
 }
 
-.top-navbar {
-    position: sticky; top: 0; z-index: 999;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(74,144,217,0.15);
-    box-shadow: 0 2px 20px rgba(13,43,110,0.08);
-    padding: 0 32px;
-    display: flex; align-items: center; justify-content: space-between;
-    height: 64px;
-}
-
 .agent-grid-card {
     background: white; border-radius: 20px;
     padding: 28px 20px 20px; text-align: center;
@@ -397,15 +386,6 @@ header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Handle incoming chat message from iframe BEFORE session state init ──
-_qp = st.query_params
-_pending = _qp.get("mc_msg", "")
-if _pending:
-    st.query_params.clear()
-    st.session_state["pending_chat_msg"] = _pending
-    st.session_state["onboarding_done"] = True
-    st.session_state["active_tab"] = "chat"
-    
 # ── Session state defaults ────────────────────────────────────
 defaults = {
     "run_all_triggered": False,
@@ -432,7 +412,7 @@ defaults = {
     "recipient_email": "",
     "docs_just_processed": False,
     "user_language": "English",
-    "voice_input_field": "",
+    "prefill_input": "",
 }
 
 for k, v in defaults.items():
@@ -1486,21 +1466,41 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            current_ui_lang = st.session_state.get("user_language", "English")
-            lang_code_map   = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
-            recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
+            # ── Voice input via Groq Whisper ──────────────────
+            with st.expander("🎤 Voice input", expanded=False):
+                audio = st.audio_input("Record your question")
+                if audio:
+                    with st.spinner("Transcribing…"):
+                        try:
+                            from groq import Groq
+                            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+                            transcription = groq_client.audio.transcriptions.create(
+                                file=("audio.wav", audio.read(), "audio/wav"),
+                                model="whisper-large-v3",
+                                language="en",
+                            )
+                            st.session_state["prefill_input"] = transcription.text
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Transcription failed: {e}")
 
-            # Read message saved from query param at page top
-            pending_msg = st.session_state.pop("pending_chat_msg", "")
-            if pending_msg:
+            # ── Text input ────────────────────────────────────
+            prefill = st.session_state.pop("prefill_input", "")
+            user_input = st.chat_input(prefill if prefill else "Ask about your medical documents…")
+
+            # Auto-send transcribed voice message
+            if prefill and not user_input:
+                user_input = prefill
+
+            if user_input:
                 history_before = list(st.session_state.chat_history)
-                st.session_state.chat_history.append({"role": "user", "content": pending_msg})
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
                 with st.spinner("Reading your documents…"):
                     try:
                         answer = get_answer(
                             llm=st.session_state.llm,
                             retriever=st.session_state.retriever,
-                            question=pending_msg,
+                            question=user_input,
                             chat_history=history_before,
                             mood=st.session_state.user_mood,
                             user_name=st.session_state.user_name,
@@ -1514,153 +1514,6 @@ with main_col:
                         answer = f"Something went wrong while reading your documents. (Error: {e})"
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
-            
-           
-
-            st.iframe(
-                f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                <style>
-                  * {{ box-sizing:border-box; margin:0; padding:0; }}
-                  html, body {{ background:transparent; height:72px; overflow:hidden; }}
-                  body {{ display:flex; align-items:center; padding:4px 0; }}
-                  .bar {{
-                    display:flex; align-items:center; width:100%;
-                    background:#fff;
-                    border:2px solid rgba(74,144,217,0.30);
-                    border-radius:20px;
-                    box-shadow:0 4px 24px rgba(13,43,110,0.10);
-                    padding:6px 8px 6px 16px; gap:6px;
-                    transition:border-color .25s,box-shadow .25s;
-                  }}
-                  .bar:focus-within {{
-                    border-color:#4a90d9;
-                    box-shadow:0 4px 24px rgba(74,144,217,0.25);
-                  }}
-                  textarea {{
-                    flex:1; border:none; outline:none; resize:none;
-                    font-family:'Nunito',sans-serif; font-size:15px;
-                    color:#1a2b5e; background:transparent;
-                    line-height:1.5; max-height:80px; overflow-y:auto; padding:4px 0;
-                  }}
-                  textarea::placeholder {{ color:#8aaee0; }}
-                  .btn {{
-                    width:38px; height:38px; border-radius:50%; border:none;
-                    cursor:pointer; display:flex; align-items:center; justify-content:center;
-                    flex-shrink:0; transition:all .2s;
-                  }}
-                  .btn:hover {{ transform:scale(1.1); }}
-                  #mic {{ background:rgba(74,144,217,0.08); }}
-                  #mic.on {{ background:rgba(239,68,68,0.12); animation:pulse 1s infinite; }}
-                  @keyframes pulse {{
-                    0%,100% {{ box-shadow:0 0 0 0 rgba(239,68,68,0.3); }}
-                    50%      {{ box-shadow:0 0 0 6px rgba(239,68,68,0); }}
-                  }}
-                  #send {{
-                    background:linear-gradient(135deg,#4a90d9,#2563c7);
-                    box-shadow:0 2px 8px rgba(37,99,199,0.30);
-                  }}
-                  #send:disabled {{ opacity:0.40; cursor:default; transform:none !important; }}
-                </style>
-                </head>
-                <body>
-                <div class="bar">
-                  <textarea id="ta" rows="1"
-                    placeholder="Ask about your medical documents…"></textarea>
-                  <button class="btn" id="mic" title="Voice input" onclick="toggleMic()">
-                    <svg id="mic-svg" width="20" height="20" viewBox="0 0 24 24"
-                        fill="none" stroke="#4a90d9" stroke-width="2.2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="9" y="2" width="6" height="11" rx="3"/>
-                      <path d="M5 10a7 7 0 0 0 14 0"/>
-                      <line x1="12" y1="17" x2="12" y2="22"/>
-                      <line x1="8" y1="22" x2="16" y2="22"/>
-                    </svg>
-                  </button>
-                  <button class="btn" id="send" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24"
-                        fill="none" stroke="#fff" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"/>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                  </button>
-                </div>
-                <script>
-                var ta      = document.getElementById('ta');
-                var sendBtn = document.getElementById('send');
-                var micBtn  = document.getElementById('mic');
-                var micSvg  = document.getElementById('mic-svg');
-                var recog   = null;
-                var listening = false;
-
-                ta.addEventListener('input', function() {{
-                  ta.style.height = 'auto';
-                  ta.style.height = Math.min(ta.scrollHeight, 80) + 'px';
-                  sendBtn.disabled = ta.value.trim() === '';
-                }});
-
-                ta.addEventListener('keydown', function(e) {{
-                  if (e.key === 'Enter' && !e.shiftKey) {{
-                    e.preventDefault(); sendMsg();
-                  }}
-                }});
-
-                function sendMsg() {{
-                  var text = ta.value.trim();
-                  if (!text) return;
-                  ta.value = '';
-                  ta.style.height = 'auto';
-                  sendBtn.disabled = true;
-                  var frm=document.createElement('form');
-                  frm.method='GET';frm.target='_top';frm.action='';
-                  var inp=document.createElement('input');
-                  inp.type='hidden';inp.name='mc_msg';inp.value=text;
-                  frm.appendChild(inp);document.body.appendChild(frm);frm.submit();
-                }}
-
-                function toggleMic() {{
-                  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                  if (!SR) {{ alert('Voice input needs Chrome or Edge.'); return; }}
-                  if (listening) {{ recog.stop(); return; }}
-                  recog = new SR();
-                  recog.lang = '{recognition_lang}';
-                  recog.continuous = false;
-                  recog.interimResults = false;
-                  recog.onstart = function() {{
-                    listening = true;
-                    micBtn.classList.add('on');
-                    micSvg.setAttribute('stroke','#ef4444');
-                  }};
-                  recog.onresult = function(e) {{
-                    var text = e.results[0][0].transcript.trim();
-                    ta.value = text;
-                    ta.style.height = 'auto';
-                    ta.style.height = Math.min(ta.scrollHeight,80)+'px';
-                    sendBtn.disabled = false;
-                    setTimeout(sendMsg, 500);
-                  }};
-                  recog.onerror = recog.onend = function() {{
-                    listening = false;
-                    micBtn.classList.remove('on');
-                    micSvg.setAttribute('stroke','#4a90d9');
-                  }};
-                  recog.start();
-                }}
-
-                sendBtn.addEventListener('click', function(e) {{
-                  e.preventDefault();
-                  e.stopPropagation();
-                  sendMsg();
-                }});
-                </script>
-                </body>
-                </html>
-                """,
-                height=72,
-            )
 
     # ══════════════════════════════════════════════════════════
     #  DOCUMENTS TAB
