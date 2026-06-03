@@ -5,14 +5,13 @@ langchain-community
 langchain-groq
 langchain-huggingface
 langchain-text-splitters
-chromadb
+chromadb==0.4.24
 pymupdf
-sentence-transformers
+sentence-transformers==2.7.0
 python-dotenv
 python-docx
 groq
 fpdf2
 protobuf==3.20.3
 resend
-chromadb==0.4.24
 numpy==1.26.4
