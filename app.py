@@ -413,6 +413,7 @@ defaults = {
     "docs_just_processed": False,
     "user_language": "English",
     "prefill_input": "",
+    "last_audio_id": None,
 }
 
 for k, v in defaults.items():
@@ -1466,23 +1467,26 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            # ── Voice input via Groq Whisper ──────────────────
             with st.expander("🎤 Voice input", expanded=False):
                 audio = st.audio_input("Record your question")
                 if audio:
-                    with st.spinner("Transcribing…"):
-                        try:
-                            from groq import Groq
-                            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-                            transcription = groq_client.audio.transcriptions.create(
-                                file=("audio.wav", audio.read(), "audio/wav"),
-                                model="whisper-large-v3",
-                                language="en",
-                            )
-                            # Store without rerunning — let the render continue
-                            st.session_state["prefill_input"] = transcription.text
-                        except Exception as e:
-                            st.error(f"Transcription failed: {e}")
+                    audio_id = hash(audio.read())
+                    audio.seek(0)
+                    
+                    if audio_id != st.session_state.get("last_audio_id"):
+                        st.session_state["last_audio_id"] = audio_id
+                        with st.spinner("Transcribing…"):
+                            try:
+                                from groq import Groq
+                                groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+                                transcription = groq_client.audio.transcriptions.create(
+                                    file=("audio.wav", audio.read(), "audio/wav"),
+                        model="whisper-large-v3",
+                        language="en",
+                    )
+                    st.session_state["prefill_input"] = transcription.text
+                except Exception as e:
+                    st.error(f"Transcription failed: {e}")
 
             # ── Text input ────────────────────────────────────
             prefill = st.session_state.pop("prefill_input", "")
