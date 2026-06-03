@@ -1477,7 +1477,7 @@ with main_col:
                 </p>
             </div>
             """, unsafe_allow_html=True)
-            
+
         else:
             current_ui_lang = st.session_state.get("user_language", "English")
             lang_code_map   = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
@@ -1489,6 +1489,18 @@ with main_col:
                 key="voice_msg_bridge",
                 label_visibility="collapsed",
             )
+
+            st.markdown("""
+            <style>
+            div[data-testid="stTextInput"]:has(input#voice_msg_bridge) { 
+                position: absolute; 
+                opacity: 0; 
+                height: 0; 
+                overflow: hidden;
+                pointer-events: none;
+            }
+            </style>
+            """, unsafe_allow_html=True)
 
             chat_bar_html = f"""
             <style>
@@ -1585,9 +1597,19 @@ with main_col:
               function sendMsg() {{
                 var text = ta.value.trim();
                 if (!text) return;
-                var stInput = window.parent.document.querySelector(
-                  'input[aria-label="voice_bridge"]'
-                );
+                var stInputs = window.parent.document.querySelectorAll('input[type="text"]');
+                var stInput = null;
+                for (var i = 0; i < stInputs.length; i++) {{
+                  var el = stInputs[i];
+                  var rect = el.getBoundingClientRect();
+                  var isHidden = rect.width < 5 || rect.height < 5 || 
+                                 el.closest('[style*="height: 0"]') || 
+                                 el.closest('[style*="overflow: hidden"]');
+                  if (isHidden) {{ stInput = el; break; }}
+                }}
+                if (!stInput) {{
+                  stInput = window.parent.document.querySelector('input[data-testid="stTextInput"]');
+                }}
                 if (stInput) {{
                   var nativeSetter = Object.getOwnPropertyDescriptor(
                     window.HTMLInputElement.prototype, 'value'
