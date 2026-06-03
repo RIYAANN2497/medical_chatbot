@@ -1483,190 +1483,19 @@ with main_col:
             lang_code_map   = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
             recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
 
-            bridge_val = st.text_input(
-                "voice_bridge",
-                value="",
-                key="voice_msg_bridge",
-                label_visibility="collapsed",
-            )
-
-            st.markdown("""
-            <style>
-            div[data-testid="stTextInput"]:has(input#voice_msg_bridge) { 
-                position: absolute; 
-                opacity: 0; 
-                height: 0; 
-                overflow: hidden;
-                pointer-events: none;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-
-            chat_bar_html = f"""
-            <style>
-              * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-              body {{ background: transparent; font-family: 'Nunito', sans-serif; }}
-              .bar-wrap {{
-                display: flex; align-items: center;
-                background: #ffffff;
-                border: 2px solid rgba(74,144,217,0.30);
-                border-radius: 20px;
-                box-shadow: 0 4px 24px rgba(13,43,110,0.10);
-                padding: 6px 8px 6px 16px; gap: 6px;
-                transition: border-color 0.25s, box-shadow 0.25s;
-              }}
-              .bar-wrap:focus-within {{
-                border-color: #4a90d9;
-                box-shadow: 0 4px 24px rgba(74,144,217,0.25);
-              }}
-              textarea {{
-                flex: 1; border: none; outline: none; resize: none;
-                font-family: 'Nunito', sans-serif; font-size: 15px;
-                color: #1a2b5e; background: transparent;
-                line-height: 1.5; max-height: 120px; overflow-y: auto; padding: 4px 0;
-              }}
-              textarea::placeholder {{ color: #8aaee0; }}
-              .icon-btn {{
-                width: 38px; height: 38px; border-radius: 50%; border: none;
-                cursor: pointer; display: flex; align-items: center; justify-content: center;
-                flex-shrink: 0; transition: all 0.2s ease; background: transparent;
-              }}
-              .icon-btn:hover {{ transform: scale(1.1); }}
-              #mic-btn {{ background: rgba(74,144,217,0.08); }}
-              #mic-btn.listening {{
-                background: rgba(239,68,68,0.12);
-                animation: mic-pulse 1s infinite;
-              }}
-              @keyframes mic-pulse {{
-                0%,100% {{ box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }}
-                50%      {{ box-shadow: 0 0 0 6px rgba(239,68,68,0); }}
-              }}
-              #send-btn {{
-                background: linear-gradient(135deg, #4a90d9, #2563c7);
-                box-shadow: 0 2px 8px rgba(37,99,199,0.30);
-              }}
-              #send-btn:hover {{ box-shadow: 0 4px 14px rgba(37,99,199,0.45); }}
-              #send-btn:disabled {{ opacity: 0.45; cursor: default; transform: none; }}
-            </style>
-
-            <div class="bar-wrap">
-              <textarea id="chat-ta" rows="1"
-                placeholder="Ask about your medical documents…"></textarea>
-
-              <button class="icon-btn" id="mic-btn" title="Voice input" onclick="toggleMic()">
-                <svg id="mic-svg" width="20" height="20" viewBox="0 0 24 24"
-                    fill="none" stroke="#4a90d9" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="2" width="6" height="11" rx="3"/>
-                  <path d="M5 10a7 7 0 0 0 14 0"/>
-                  <line x1="12" y1="17" x2="12" y2="22"/>
-                  <line x1="8" y1="22" x2="16" y2="22"/>
-                </svg>
-              </button>
-
-              <button class="icon-btn" id="send-btn" title="Send" onclick="sendMsg()" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24"
-                    fill="none" stroke="#ffffff" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
-              </button>
-            </div>
-
-            <script>
-            (function() {{
-              var REC_LANG = "{recognition_lang}";
-              var ta      = document.getElementById('chat-ta');
-              var sendBtn = document.getElementById('send-btn');
-              var micBtn  = document.getElementById('mic-btn');
-              var micSvg  = document.getElementById('mic-svg');
-              var recog   = null;
-              var listening = false;
-
-              ta.addEventListener('input', function() {{
-                ta.style.height = 'auto';
-                ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-                sendBtn.disabled = ta.value.trim() === '';
-              }});
-
-              ta.addEventListener('keydown', function(e) {{
-                if (e.key === 'Enter' && !e.shiftKey) {{ e.preventDefault(); sendMsg(); }}
-              }});
-
-              function sendMsg() {{
-                var text = ta.value.trim();
-                if (!text) return;
-                var stInputs = window.parent.document.querySelectorAll('input[type="text"]');
-                var stInput = null;
-                for (var i = 0; i < stInputs.length; i++) {{
-                  var el = stInputs[i];
-                  var rect = el.getBoundingClientRect();
-                  var isHidden = rect.width < 5 || rect.height < 5 || 
-                                 el.closest('[style*="height: 0"]') || 
-                                 el.closest('[style*="overflow: hidden"]');
-                  if (isHidden) {{ stInput = el; break; }}
-                }}
-                if (!stInput) {{
-                  stInput = window.parent.document.querySelector('input[data-testid="stTextInput"]');
-                }}
-                if (stInput) {{
-                  var nativeSetter = Object.getOwnPropertyDescriptor(
-                    window.HTMLInputElement.prototype, 'value'
-                  ).set;
-                  nativeSetter.call(stInput, text);
-                  stInput.dispatchEvent(new Event('input', {{bubbles: true}}));
-                }}
-                ta.value = '';
-                ta.style.height = 'auto';
-                sendBtn.disabled = true;
-              }}
-
-              function toggleMic() {{
-                var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SR) {{ alert('Voice input requires Chrome or Edge.'); return; }}
-                if (listening) {{ recog.stop(); return; }}
-                recog = new SR();
-                recog.lang = REC_LANG;
-                recog.continuous = false;
-                recog.interimResults = false;
-                recog.onstart = function() {{
-                  listening = true;
-                  micBtn.classList.add('listening');
-                  micSvg.setAttribute('stroke', '#ef4444');
-                }};
-                recog.onresult = function(e) {{
-                  var text = e.results[0][0].transcript.trim();
-                  ta.value = text;
-                  ta.style.height = 'auto';
-                  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-                  sendBtn.disabled = false;
-                  ta.focus();
-                }};
-                recog.onerror = recog.onend = function() {{
-                  listening = false;
-                  micBtn.classList.remove('listening');
-                  micSvg.setAttribute('stroke', '#4a90d9');
-                }};
-                recog.start();
-              }}
-            }})();
-            </script>
-            """
-
-            components.html(chat_bar_html, height=72)
-
-            user_question = bridge_val.strip() if bridge_val else ""
-            if user_question:
-                st.session_state["voice_msg_bridge"] = ""
+            # Read message from query params (set by the iframe JS)
+            qp = st.query_params
+            pending_msg = qp.get("mc_msg", "")
+            if pending_msg:
+                st.query_params.clear()
                 history_before = list(st.session_state.chat_history)
-                st.session_state.chat_history.append({"role": "user", "content": user_question})
+                st.session_state.chat_history.append({"role": "user", "content": pending_msg})
                 with st.spinner("Reading your documents…"):
                     try:
                         answer = get_answer(
                             llm=st.session_state.llm,
                             retriever=st.session_state.retriever,
-                            question=user_question,
+                            question=pending_msg,
                             chat_history=history_before,
                             mood=st.session_state.user_mood,
                             user_name=st.session_state.user_name,
@@ -1680,6 +1509,144 @@ with main_col:
                         answer = f"Something went wrong while reading your documents. (Error: {e})"
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
+
+            components.html(
+                f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <style>
+                  * {{ box-sizing:border-box; margin:0; padding:0; }}
+                  html, body {{ background:transparent; height:72px; overflow:hidden; }}
+                  body {{ display:flex; align-items:center; padding:4px 0; }}
+                  .bar {{
+                    display:flex; align-items:center; width:100%;
+                    background:#fff;
+                    border:2px solid rgba(74,144,217,0.30);
+                    border-radius:20px;
+                    box-shadow:0 4px 24px rgba(13,43,110,0.10);
+                    padding:6px 8px 6px 16px; gap:6px;
+                    transition:border-color .25s,box-shadow .25s;
+                  }}
+                  .bar:focus-within {{
+                    border-color:#4a90d9;
+                    box-shadow:0 4px 24px rgba(74,144,217,0.25);
+                  }}
+                  textarea {{
+                    flex:1; border:none; outline:none; resize:none;
+                    font-family:'Nunito',sans-serif; font-size:15px;
+                    color:#1a2b5e; background:transparent;
+                    line-height:1.5; max-height:80px; overflow-y:auto; padding:4px 0;
+                  }}
+                  textarea::placeholder {{ color:#8aaee0; }}
+                  .btn {{
+                    width:38px; height:38px; border-radius:50%; border:none;
+                    cursor:pointer; display:flex; align-items:center; justify-content:center;
+                    flex-shrink:0; transition:all .2s;
+                  }}
+                  .btn:hover {{ transform:scale(1.1); }}
+                  #mic {{ background:rgba(74,144,217,0.08); }}
+                  #mic.on {{ background:rgba(239,68,68,0.12); animation:pulse 1s infinite; }}
+                  @keyframes pulse {{
+                    0%,100% {{ box-shadow:0 0 0 0 rgba(239,68,68,0.3); }}
+                    50%      {{ box-shadow:0 0 0 6px rgba(239,68,68,0); }}
+                  }}
+                  #send {{
+                    background:linear-gradient(135deg,#4a90d9,#2563c7);
+                    box-shadow:0 2px 8px rgba(37,99,199,0.30);
+                  }}
+                  #send:disabled {{ opacity:0.40; cursor:default; transform:none !important; }}
+                </style>
+                </head>
+                <body>
+                <div class="bar">
+                  <textarea id="ta" rows="1"
+                    placeholder="Ask about your medical documents…"></textarea>
+
+                  <button class="btn" id="mic" title="Voice input" onclick="toggleMic()">
+                    <svg id="mic-svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="#4a90d9" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="2" width="6" height="11" rx="3"/>
+                      <path d="M5 10a7 7 0 0 0 14 0"/>
+                      <line x1="12" y1="17" x2="12" y2="22"/>
+                      <line x1="8" y1="22" x2="16" y2="22"/>
+                    </svg>
+                  </button>
+
+                  <button class="btn" id="send" onclick="sendMsg()" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="#fff" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <script>
+                var ta      = document.getElementById('ta');
+                var sendBtn = document.getElementById('send');
+                var micBtn  = document.getElementById('mic');
+                var micSvg  = document.getElementById('mic-svg');
+                var recog   = null;
+                var listening = false;
+
+                ta.addEventListener('input', function() {{
+                  ta.style.height = 'auto';
+                  ta.style.height = Math.min(ta.scrollHeight, 80) + 'px';
+                  sendBtn.disabled = ta.value.trim() === '';
+                }});
+
+                ta.addEventListener('keydown', function(e) {{
+                  if (e.key === 'Enter' && !e.shiftKey) {{
+                    e.preventDefault(); sendMsg();
+                  }}
+                }});
+
+                function sendMsg() {{
+                  var text = ta.value.trim();
+                  if (!text) return;
+                  // Navigate parent to ?mc_msg=... which Streamlit reads as query param
+                  var encoded = encodeURIComponent(text);
+                  window.parent.location.href =
+                    window.parent.location.pathname + '?mc_msg=' + encoded;
+                }}
+
+                function toggleMic() {{
+                  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                  if (!SR) {{ alert('Voice input needs Chrome or Edge.'); return; }}
+                  if (listening) {{ recog.stop(); return; }}
+                  recog = new SR();
+                  recog.lang = '{recognition_lang}';
+                  recog.continuous = false;
+                  recog.interimResults = false;
+                  recog.onstart = function() {{
+                    listening = true;
+                    micBtn.classList.add('on');
+                    micSvg.setAttribute('stroke','#ef4444');
+                  }};
+                  recog.onresult = function(e) {{
+                    var text = e.results[0][0].transcript.trim();
+                    ta.value = text;
+                    ta.style.height = 'auto';
+                    ta.style.height = Math.min(ta.scrollHeight,80)+'px';
+                    sendBtn.disabled = false;
+                    setTimeout(sendMsg, 500);
+                  }};
+                  recog.onerror = recog.onend = function() {{
+                    listening = false;
+                    micBtn.classList.remove('on');
+                    micSvg.setAttribute('stroke','#4a90d9');
+                  }};
+                  recog.start();
+                }}
+                </script>
+                </body>
+                </html>
+                """,
+                height=72,
+            )
 
     # ══════════════════════════════════════════════════════════
     #  DOCUMENTS TAB
