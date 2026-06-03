@@ -11,6 +11,7 @@ from qa_chain import build_qa_chain, get_answer
 from agents import AgentOrchestrator
 from pathlib import Path
 import html
+import streamlit.components.v1 as components
 
 load_dotenv()
 
@@ -548,6 +549,8 @@ defaults = {
     "recipient_email": "",
     "docs_just_processed": False,
     "user_language": "English",  # ← new
+    "voice_input_field": "",
+
 }
 
 for k, v in defaults.items():
@@ -1490,8 +1493,6 @@ with main_col:
                     unsafe_allow_html=True,
                 )
 
-
-        # No docs uploaded yet
         if st.session_state.llm is None:
             st.markdown("""
             <div style="text-align:center;margin:32px auto;padding:28px 32px;
@@ -1508,6 +1509,219 @@ with main_col:
             </div>
             """, unsafe_allow_html=True)
         else:
+            voice_transcript = st.text_input(
+                "voice_hidden",
+                value="",
+                key="voice_input_field",
+                label_visibility="collapsed",
+            )
+
+            # Hide the text input visually
+            st.markdown("""
+            <style>
+            div[data-testid="stTextInput"]:has(input[aria-label="voice_hidden"]) {
+                position: absolute !important;
+                left: -9999px !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+
+            current_ui_lang = st.session_state.get("user_language", "English")
+            lang_code_map = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
+            recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
+
+            # Mic button + JS — injected via components.html (display only, no return needed)
+            components.html(
+                f"""
+                <div style="display:flex;align-items:center;justify-content:flex-end;
+                    padding:4px 4px 2px;gap:10px;">
+
+                    <span id="voice-status" style="
+                        font-size:12px;color:#5a7abf;
+                        font-family:'Nunito',sans-serif;
+                        opacity:0;transition:opacity 0.3s;
+                        font-style:italic;">
+                        Listening…
+                    </span>
+
+                    <button id="mic-btn" onclick="toggleVoice()" title="Voice input"
+                        style="width:44px;height:44px;border-radius:50%;
+                        border:2px solid #4a90d9;background:white;cursor:pointer;
+                        display:flex;align-items:center;justify-content:center;
+                        transition:all 0.25s;flex-shrink:0;padding:0;
+                        box-shadow:0 2px 8px rgba(74,144,217,0.2);">
+                        <svg id="mic-icon" width="20" height="20" viewBox="0 0 24 24"
+                            fill="none" stroke="#4a90d9" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="2" width="6" height="11" rx="3"/>
+                            <path d="M5 10a7 7 0 0 0 14 0"/>
+                            <line x1="12" y1="17" x2="12" y2="22"/>
+                            <line x1="8" y1="22" x2="16" y2="22"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <script>
+                const RECOGNITION_LANG = "{recognition_lang}";
+                let recognition = null;
+                let isListening  = false;
+
+                const LANG_MAP = {{
+                    'hi': 'Hindi', 'hi-in': 'Hindi',
+                    'ml': 'Malayalam', 'ml-in': 'Malayalam',
+                    'en': 'English', 'en-us': 'English',
+                    'en-in': 'English', 'en-gb': 'English',
+                }};
+
+                function detectLang(code) {
+                    if (!code) return 'English';
+                    const lower = code.toLowerCase();
+                    return LANG_MAP[lower] || LANG_MAP[lower.split('-')[0]] || '{current_ui_lang}';
+                }
+
+                // Find Streamlit's hidden text input in the parent frame and set its value,
+                // then fire React's synthetic onChange so Streamlit picks it up.
+                function setStreamlitInput(value) {
+                    const inputs = window.parent.document.querySelectorAll('input[type="text"]');
+                    for (const inp of inputs) {
+                        // Our hidden input has aria-label matching its label
+                        if (inp.getAttribute('aria-label') === 'voice_hidden') {
+                            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                                window.HTMLInputElement.prototype, 'value'
+                            ).set;
+                            nativeInputValueSetter.call(inp, value);
+                                inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            break;
+                        }
+                    }
+                }
+
+                function toggleVoice() {
+                    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (!SR) {
+                        alert('Voice input needs Chrome or Edge. Please switch browsers.');
+                        return;
+                    }
+
+                    if (isListening) {
+                        recognition.stop();
+                        return;
+                    }
+
+                    recognition = new SR();
+                    recognition.continuous     = false;
+                    recognition.interimResults = false;
+                    recognition.lang           = RECOGNITION_LANG;
+
+                    recognition.onstart = () => {
+                        isListening = true;
+                        const btn  = document.getElementById('mic-btn');
+                        const icon = document.getElementById('mic-icon');
+                        btn.style.background   = '#fef2f2';
+                        btn.style.borderColor  = '#ef4444';
+                        btn.style.boxShadow    = '0 2px 12px rgba(239,68,68,0.35)';
+                        icon.setAttribute('stroke', '#ef4444');
+                        document.getElementById('voice-status').style.opacity = '1';
+                    };
+
+                    recognition.onresult = (e) => {
+                        const transcript = e.results[0][0].transcript.trim();
+
+                        // Try to get detected language from the result
+                        // (Chrome exposes this on the SpeechRecognitionResult)
+                        let rawLang = '';
+                        try { rawLang = e.results[0][0].lang || ''; } catch(_) {}
+
+                        const detectedLang = detectLang(rawLang);
+
+                        // Bundle transcript + lang into JSON and write to the hidden input
+                        const payload = JSON.stringify({{ text: transcript, lang: detectedLang }});
+                        setStreamlitInput(payload);
+                    };
+
+                    recognition.onerror = (e) => {
+                        console.warn('Speech recognition error:', e.error);
+                        stopListening();
+                    };
+
+                    recognition.onend = stopListening;
+
+                    recognition.start();
+                }
+
+                function stopListening() {
+                    isListening = false;
+                    const btn  = document.getElementById('mic-btn');
+                    const icon = document.getElementById('mic-icon');
+                    btn.style.background  = 'white';
+                    btn.style.borderColor = '#4a90d9';
+                    btn.style.boxShadow   = '0 2px 8px rgba(74,144,217,0.2)';
+                    icon.setAttribute('stroke', '#4a90d9');
+                    document.getElementById('voice-status').style.opacity = '0';
+                }
+                </script>
+                """,
+                height=58,
+            )
+
+            # ── Process voice transcript if received ──────────────
+            if voice_transcript and voice_transcript.strip():
+                # Clear it immediately so it doesn't re-fire on next rerun
+                st.session_state.voice_input_field = ""
+                try:
+                    import json as _json
+                    payload    = _json.loads(voice_transcript)
+                    voice_text = payload.get("text", "").strip()
+                    voice_lang = payload.get("lang", "English")
+                except Exception:
+                    # Fallback: treat raw string as plain transcript
+                    voice_text = voice_transcript.strip()
+                    voice_lang = st.session_state.get("user_language", "English")
+
+                if voice_text:
+                    # Auto-switch language if different from current
+                    current_lang = st.session_state.get("user_language", "English")
+                    if voice_lang != current_lang and voice_lang in ["English", "Hindi", "Malayalam"]:
+                        st.session_state.user_language = voice_lang
+                        from langchain_groq import ChatGroq as _ChatGroq
+                        from langchain_core.output_parsers import StrOutputParser as _SOP
+                        _lang_llm = _ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+                        ack = (_lang_llm | _SOP()).invoke(
+                            f"In {voice_lang} only, write one warm sentence (max 10 words) "
+                            f"saying you detected they're speaking {voice_lang} and will "
+                            f"reply in it. Keep emojis."
+                        )
+                        st.session_state.chat_history.append({"role": "assistant", "content": ack})
+
+                    # Send through same pipeline as typed questions
+                    history_before = list(st.session_state.chat_history)
+                    st.session_state.chat_history.append({"role": "user", "content": voice_text})
+                    with st.spinner("Reading your documents…"):
+                        try:
+                            answer = get_answer(
+                                llm=st.session_state.llm,
+                                retriever=st.session_state.retriever,
+                                question=voice_text,
+                                chat_history=history_before,
+                                mood=st.session_state.user_mood,
+                                user_name=st.session_state.user_name,
+                                user_conditions=st.session_state.user_conditions,
+                                user_whom=st.session_state.user_whom,
+                                user_age=st.session_state.user_age,
+                                summaries=st.session_state.get("summaries", {}),
+                                user_language=st.session_state.get("user_language", "English"),
+                            )
+                        except Exception as e:
+                            answer = f"Something went wrong processing your voice input. (Error: {e})"
+                    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                    st.rerun()
+
+            # ── Text chat input ───────────────────────────────────
             user_question = st.chat_input("Ask about your medical documents…")
             if user_question:
                 history_before = list(st.session_state.chat_history)
@@ -1528,9 +1742,10 @@ with main_col:
                             user_language=st.session_state.get("user_language", "English"),
                         )
                     except Exception as e:
-                        answer = f"Something went wrong while reading your documents. Please try again. (Error: {e})"
+                        answer = f"Something went wrong while reading your documents. (Error: {e})"
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
+
 
     # ══════════════════════════════════════════════════════════
     #  DOCUMENTS TAB
