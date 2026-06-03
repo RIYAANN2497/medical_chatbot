@@ -1479,214 +1479,161 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            # ── Voice input (hidden text field + JS mic button) ───
-            # NOTE: The JS is in a plain string (not f-string) to avoid brace-escaping issues.
-            # The two dynamic values (recognition_lang, current_ui_lang) are injected via
-            # str.replace() on the plain string before passing to components.html().
-
             current_ui_lang = st.session_state.get("user_language", "English")
             lang_code_map = {"English": "en-IN", "Hindi": "hi-IN", "Malayalam": "ml-IN"}
             recognition_lang = lang_code_map.get(current_ui_lang, "en-IN")
 
-            voice_transcript = st.text_input(
-                "voice_hidden",
-                value="",
-                key="voice_input_field",
-                label_visibility="collapsed",
-            )
-
+            # ── Mic button overlaid inside the chat input bar via CSS ──
             st.markdown("""
             <style>
-            div[data-testid="stTextInput"]:has(input[aria-label="voice_hidden"]) {
-                position: absolute !important;
-                left: -9999px !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-                height: 0 !important;
-                overflow: hidden !important;
+            /* Push the chat input left to make room for mic */
+            [data-testid="stChatInput"] textarea {
+                padding-right: 56px !important;
+            }
+            /* Mic button floated inside the bar */
+            #mic-float-btn {
+                position: fixed;
+                bottom: 22px;
+                right: 80px;
+                z-index: 9999;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+            #mic-float-btn:hover { transform: scale(1.1); }
+            #mic-float-btn.listening svg { stroke: #ef4444 !important; }
+            #mic-status-badge {
+                position: fixed;
+                bottom: 68px;
+                right: 60px;
+                z-index: 9999;
+                background: #ef4444;
+                color: white;
+                font-size: 11px;
+                font-family: 'Nunito', sans-serif;
+                font-weight: 700;
+                padding: 3px 10px;
+                border-radius: 20px;
+                display: none;
+                animation: pulse-badge 1s infinite;
+            }
+            @keyframes pulse-badge {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
             }
             </style>
+
+            <div id="mic-status-badge">🎙 Listening…</div>
+
+            <button id="mic-float-btn" onclick="toggleMic()" title="Voice input">
+                <svg id="mic-svg" width="22" height="22" viewBox="0 0 24 24"
+                    fill="none" stroke="#4a90d9" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="2" width="6" height="11" rx="3"/>
+                    <path d="M5 10a7 7 0 0 0 14 0"/>
+                    <line x1="12" y1="17" x2="12" y2="22"/>
+                    <line x1="8" y1="22" x2="16" y2="22"/>
+                </svg>
+            </button>
             """, unsafe_allow_html=True)
 
-            # Build the HTML/JS as a plain string — NO f-string — then substitute
-            # the two dynamic values with a simple str.replace so we never have to
-            # worry about escaping every JS brace pair.
-            voice_html = (
+            # Voice result goes into this visible text input (above chat bar)
+            # which the user can edit before sending
+            if "voice_pending" not in st.session_state:
+                st.session_state.voice_pending = ""
+
+            voice_input_val = st.session_state.get("voice_pending", "")
+
+            # Inject the JS — plain string, no f-string, values replaced safely
+            voice_js = (
                 """
-                <div style="display:flex;align-items:center;justify-content:flex-end;
-                    padding:4px 4px 2px;gap:10px;">
-
-                    <span id="voice-status" style="
-                        font-size:12px;color:#5a7abf;
-                        font-family:'Nunito',sans-serif;
-                        opacity:0;transition:opacity 0.3s;
-                        font-style:italic;">
-                        Listening\u2026
-                    </span>
-
-                    <button id="mic-btn" onclick="toggleVoice()" title="Voice input"
-                        style="width:44px;height:44px;border-radius:50%;
-                        border:2px solid #4a90d9;background:white;cursor:pointer;
-                        display:flex;align-items:center;justify-content:center;
-                        transition:all 0.25s;flex-shrink:0;padding:0;
-                        box-shadow:0 2px 8px rgba(74,144,217,0.2);">
-                        <svg id="mic-icon" width="20" height="20" viewBox="0 0 24 24"
-                            fill="none" stroke="#4a90d9" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="2" width="6" height="11" rx="3"/>
-                            <path d="M5 10a7 7 0 0 0 14 0"/>
-                            <line x1="12" y1="17" x2="12" y2="22"/>
-                            <line x1="8" y1="22" x2="16" y2="22"/>
-                        </svg>
-                    </button>
-                </div>
-
                 <script>
-                var RECOGNITION_LANG = "___RECOGNITION_LANG___";
-                var CURRENT_UI_LANG  = "___CURRENT_UI_LANG___";
+                var REC_LANG = "___REC_LANG___";
+                var UI_LANG  = "___UI_LANG___";
+                var recog = null;
+                var listening = false;
 
                 var LANG_MAP = {
-                    'hi': 'Hindi', 'hi-in': 'Hindi',
-                    'ml': 'Malayalam', 'ml-in': 'Malayalam',
-                    'en': 'English', 'en-us': 'English',
-                    'en-in': 'English', 'en-gb': 'English'
+                    'hi':'Hindi','hi-in':'Hindi',
+                    'ml':'Malayalam','ml-in':'Malayalam',
+                    'en':'English','en-us':'English',
+                    'en-in':'English','en-gb':'English'
                 };
 
                 function detectLang(code) {
-                    if (!code) return 'English';
-                    var lower = code.toLowerCase();
-                    return LANG_MAP[lower] || LANG_MAP[lower.split('-')[0]] || CURRENT_UI_LANG;
+                    if (!code) return UI_LANG;
+                    var l = code.toLowerCase();
+                    return LANG_MAP[l] || LANG_MAP[l.split('-')[0]] || UI_LANG;
                 }
 
-                var recognition = null;
-                var isListening  = false;
-
-                function setStreamlitInput(value) {
-                    var inputs = window.parent.document.querySelectorAll('input[type="text"]');
-                    for (var i = 0; i < inputs.length; i++) {
-                        var inp = inputs[i];
-                        if (inp.getAttribute('aria-label') === 'voice_hidden') {
-                            var nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-                                window.HTMLInputElement.prototype, 'value'
-                            ).set;
-                            nativeInputValueSetter.call(inp, value);
-                            inp.dispatchEvent(new Event('input', { bubbles: true }));
-                            break;
+                function findChatInput() {
+                    var textareas = window.parent.document.querySelectorAll('textarea');
+                    for (var i = 0; i < textareas.length; i++) {
+                        if (textareas[i].placeholder && textareas[i].placeholder.indexOf('medical') !== -1) {
+                            return textareas[i];
                         }
                     }
+                    return null;
                 }
 
-                function toggleVoice() {
+                function setChatInputValue(text) {
+                    var ta = findChatInput();
+                    if (!ta) return;
+                    var setter = Object.getOwnPropertyDescriptor(
+                        window.HTMLTextAreaElement.prototype, 'value'
+                    ).set;
+                    setter.call(ta, text);
+                    ta.dispatchEvent(new Event('input', {bubbles: true}));
+                    ta.focus();
+                }
+
+                function toggleMic() {
                     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
                     if (!SR) {
-                        alert('Voice input needs Chrome or Edge. Please switch browsers.');
+                        alert('Voice input requires Chrome or Edge.');
                         return;
                     }
+                    if (listening) { recog.stop(); return; }
 
-                    if (isListening) {
-                        recognition.stop();
-                        return;
-                    }
+                    recog = new SR();
+                    recog.lang = REC_LANG;
+                    recog.continuous = false;
+                    recog.interimResults = false;
 
-                    recognition = new SR();
-                    recognition.continuous     = false;
-                    recognition.interimResults = false;
-                    recognition.lang           = RECOGNITION_LANG;
-
-                    recognition.onstart = function() {
-                        isListening = true;
-                        var btn  = document.getElementById('mic-btn');
-                        var icon = document.getElementById('mic-icon');
-                        btn.style.background   = '#fef2f2';
-                        btn.style.borderColor  = '#ef4444';
-                        btn.style.boxShadow    = '0 2px 12px rgba(239,68,68,0.35)';
-                        icon.setAttribute('stroke', '#ef4444');
-                        document.getElementById('voice-status').style.opacity = '1';
+                    recog.onstart = function() {
+                        listening = true;
+                        document.getElementById('mic-svg').setAttribute('stroke','#ef4444');
+                        document.getElementById('mic-status-badge').style.display = 'block';
                     };
 
-                    recognition.onresult = function(e) {
-                        var transcript = e.results[0][0].transcript.trim();
-                        var rawLang = '';
-                        try { rawLang = e.results[0][0].lang || ''; } catch(err) {}
-                        var detectedLang = detectLang(rawLang);
-                        var payload = JSON.stringify({ text: transcript, lang: detectedLang });
-                        setStreamlitInput(payload);
+                    recog.onresult = function(e) {
+                        var text = e.results[0][0].transcript.trim();
+                        setChatInputValue(text);
                     };
 
-                    recognition.onerror = function(e) {
-                        console.warn('Speech recognition error:', e.error);
-                        stopListening();
-                    };
-
-                    recognition.onend = stopListening;
-                    recognition.start();
+                    recog.onerror = function() { stopMic(); };
+                    recog.onend   = function() { stopMic(); };
+                    recog.start();
                 }
 
-                function stopListening() {
-                    isListening = false;
-                    var btn  = document.getElementById('mic-btn');
-                    var icon = document.getElementById('mic-icon');
-                    btn.style.background  = 'white';
-                    btn.style.borderColor = '#4a90d9';
-                    btn.style.boxShadow   = '0 2px 8px rgba(74,144,217,0.2)';
-                    icon.setAttribute('stroke', '#4a90d9');
-                    document.getElementById('voice-status').style.opacity = '0';
+                function stopMic() {
+                    listening = false;
+                    document.getElementById('mic-svg').setAttribute('stroke','#4a90d9');
+                    document.getElementById('mic-status-badge').style.display = 'none';
                 }
                 </script>
                 """
-                .replace("___RECOGNITION_LANG___", recognition_lang)
-                .replace("___CURRENT_UI_LANG___", current_ui_lang)
+                .replace("___REC_LANG___", recognition_lang)
+                .replace("___UI_LANG___", current_ui_lang)
             )
-
-            components.html(voice_html, height=58)
-
-            # ── Process voice transcript if received ──────────
-            if voice_transcript and voice_transcript.strip():
-                st.session_state.voice_input_field = ""
-                try:
-                    import json as _json
-                    payload    = _json.loads(voice_transcript)
-                    voice_text = payload.get("text", "").strip()
-                    voice_lang = payload.get("lang", "English")
-                except Exception:
-                    voice_text = voice_transcript.strip()
-                    voice_lang = st.session_state.get("user_language", "English")
-
-                if voice_text:
-                    current_lang = st.session_state.get("user_language", "English")
-                    if voice_lang != current_lang and voice_lang in ["English", "Hindi", "Malayalam"]:
-                        st.session_state.user_language = voice_lang
-                        from langchain_groq import ChatGroq as _ChatGroq
-                        from langchain_core.output_parsers import StrOutputParser as _SOP
-                        _lang_llm = _ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
-                        ack = (_lang_llm | _SOP()).invoke(
-                            f"In {voice_lang} only, write one warm sentence (max 10 words) "
-                            f"saying you detected they're speaking {voice_lang} and will "
-                            f"reply in it. Keep emojis."
-                        )
-                        st.session_state.chat_history.append({"role": "assistant", "content": ack})
-
-                    history_before = list(st.session_state.chat_history)
-                    st.session_state.chat_history.append({"role": "user", "content": voice_text})
-                    with st.spinner("Reading your documents…"):
-                        try:
-                            answer = get_answer(
-                                llm=st.session_state.llm,
-                                retriever=st.session_state.retriever,
-                                question=voice_text,
-                                chat_history=history_before,
-                                mood=st.session_state.user_mood,
-                                user_name=st.session_state.user_name,
-                                user_conditions=st.session_state.user_conditions,
-                                user_whom=st.session_state.user_whom,
-                                user_age=st.session_state.user_age,
-                                summaries=st.session_state.get("summaries", {}),
-                                user_language=st.session_state.get("user_language", "English"),
-                            )
-                        except Exception as e:
-                            answer = f"Something went wrong processing your voice input. (Error: {e})"
-                    st.session_state.chat_history.append({"role": "assistant", "content": answer})
-                    st.rerun()
+            components.html(voice_js, height=0)
 
             # ── Text chat input ───────────────────────────────
             user_question = st.chat_input("Ask about your medical documents…")
