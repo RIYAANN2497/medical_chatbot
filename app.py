@@ -1515,15 +1515,7 @@ with main_col:
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
             
-            st.iframe("""
-<script>
-window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'mc_msg') {
-        window.location.href = window.location.pathname + '?mc_msg=' + encodeURIComponent(e.data.text);
-    }
-});
-</script>
-""", height=1)
+           
 
             st.iframe(
                 f"""
@@ -1577,7 +1569,6 @@ window.addEventListener('message', function(e) {
                 <div class="bar">
                   <textarea id="ta" rows="1"
                     placeholder="Ask about your medical documents…"></textarea>
-
                   <button class="btn" id="mic" title="Voice input" onclick="toggleMic()">
                     <svg id="mic-svg" width="20" height="20" viewBox="0 0 24 24"
                         fill="none" stroke="#4a90d9" stroke-width="2.2"
@@ -1588,7 +1579,6 @@ window.addEventListener('message', function(e) {
                       <line x1="8" y1="22" x2="16" y2="22"/>
                     </svg>
                   </button>
-
                   <button class="btn" id="send" disabled>
                     <svg width="18" height="18" viewBox="0 0 24 24"
                         fill="none" stroke="#fff" stroke-width="2.5"
@@ -1598,7 +1588,6 @@ window.addEventListener('message', function(e) {
                     </svg>
                   </button>
                 </div>
-
                 <script>
                 var ta      = document.getElementById('ta');
                 var sendBtn = document.getElementById('send');
@@ -1625,7 +1614,7 @@ window.addEventListener('message', function(e) {
                   ta.value = '';
                   ta.style.height = 'auto';
                   sendBtn.disabled = true;
-                  window.parent.postMessage({{type: 'mc_msg', text: text}}, '*');
+                  window.parent.location.href = window.parent.location.pathname + '?mc_msg=' + encodeURIComponent(text);
                 }}
 
                 function toggleMic() {{
@@ -1660,10 +1649,6 @@ window.addEventListener('message', function(e) {
                 sendBtn.addEventListener('click', function(e) {{
                   e.preventDefault();
                   e.stopPropagation();
-                  sendBtn.style.background = 'green';
-                  setTimeout(function() {{
-                    sendBtn.style.background = '';
-                  }}, 300);
                   sendMsg();
                 }});
                 </script>
