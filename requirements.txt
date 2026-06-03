@@ -14,3 +14,4 @@ groq
 fpdf2
 protobuf==3.20.3
 resend
+chromadb==0.4.24
