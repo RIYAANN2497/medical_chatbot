@@ -11,7 +11,6 @@ from qa_chain import build_qa_chain, get_answer
 from agents import AgentOrchestrator
 from pathlib import Path
 import html
-import streamlit.components.v1 as components
 
 load_dotenv()
 
@@ -1516,7 +1515,7 @@ with main_col:
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
             
-            components.html("""
+            st.iframe("""
 <script>
 window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'mc_msg') {
@@ -1526,7 +1525,7 @@ window.addEventListener('message', function(e) {
 </script>
 """, height=0)
 
-            components.html(
+            st.iframe(
                 f"""
                 <!DOCTYPE html>
                 <html>
