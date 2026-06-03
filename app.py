@@ -1523,7 +1523,7 @@ window.addEventListener('message', function(e) {
     }
 });
 </script>
-""", height=0)
+""", height=1)
 
             st.iframe(
                 f"""
