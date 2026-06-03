@@ -1515,6 +1515,16 @@ with main_col:
                         answer = f"Something went wrong while reading your documents. (Error: {e})"
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
+            
+            components.html("""
+<script>
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'mc_msg') {
+        window.location.href = window.location.pathname + '?mc_msg=' + encodeURIComponent(e.data.text);
+    }
+});
+</script>
+""", height=0)
 
             components.html(
                 f"""
@@ -1613,17 +1623,10 @@ with main_col:
                 function sendMsg() {{
                   var text = ta.value.trim();
                   if (!text) return;
-                  var encoded = encodeURIComponent(text);
-                  try {{
-                    window.parent.location.href =
-                      window.parent.location.pathname + '?mc_msg=' + encoded;
-                  }} catch(e) {{
-                    try {{
-                      window.parent.location.replace('?mc_msg=' + encoded);
-                    }} catch(e2) {{
-                      window.location.href = '?mc_msg=' + encoded;
-                    }}
-                  }}
+                  ta.value = '';
+                  ta.style.height = 'auto';
+                  sendBtn.disabled = true;
+                  window.parent.postMessage({{type: 'mc_msg', text: text}}, '*');
                 }}
 
                 function toggleMic() {{
