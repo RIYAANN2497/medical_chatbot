@@ -414,6 +414,7 @@ defaults = {
     "user_language": "English",
     "prefill_input": "",
     "last_audio_id": None,
+    "voice_processed": False,
 }
 
 for k, v in defaults.items():
@@ -1485,20 +1486,19 @@ with main_col:
                                     language="en",
                                 )
                                 st.session_state["prefill_input"] = transcription.text
-                                st.rerun()
+                                st.session_state["voice_processed"] = False
                             except Exception as e:
                                 st.error(f"Transcription failed: {e}")
 
             # ── Text input ────────────────────────────────────
-            prefill = st.session_state.pop("prefill_input", "")
             user_input = st.chat_input("Ask about your medical documents…")
 
-            if not user_input and prefill:
-                user_input = prefill
-
-            # Auto-send transcribed voice message
-            if prefill and not user_input:
-                user_input = prefill
+            if not user_input:
+                prefill = st.session_state.get("prefill_input", "")
+                if prefill and not st.session_state.get("voice_processed", False):
+                    user_input = prefill
+                    st.session_state["voice_processed"] = True
+                    st.session_state.pop("prefill_input", None)
 
             if user_input:
                 history_before = list(st.session_state.chat_history)
