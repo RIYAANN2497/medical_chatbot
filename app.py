@@ -1478,20 +1478,14 @@ with main_col:
                         st.session_state["last_audio_id"] = audio_id
                         with st.spinner("Transcribing…"):
                             try:
-                                import google.generativeai as genai
-                                import tempfile
-                                genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-                                model = genai.GenerativeModel("gemini-2.0-flash")
-                                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_audio:
-                                    tmp_audio.write(audio_bytes)
-                                    tmp_audio_path = tmp_audio.name
-                                audio_file = genai.upload_file(tmp_audio_path, mime_type="audio/wav")
-                                response = model.generate_content([
-                                    "Transcribe this audio exactly as spoken. Return only the transcribed text, nothing else.",
-                                    audio_file
-                                ])
-                                os.unlink(tmp_audio_path)
-                                st.session_state["prefill_input"] = response.text.strip()
+                                from groq import Groq
+                                groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+                                transcription = groq_client.audio.transcriptions.create(
+                                    file=("audio.wav", audio_bytes, "audio/wav"),
+                                    model="whisper-large-v3",
+                                    language="en",
+                                )
+                                st.session_state["prefill_input"] = transcription.text
                                 st.session_state["voice_processed"] = False
                             except Exception as e:
                                 st.error(f"Transcription failed: {e}")
