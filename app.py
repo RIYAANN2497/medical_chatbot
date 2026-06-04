@@ -153,6 +153,14 @@ header { visibility: hidden; }
 [data-testid="collapsedControl"] { display: none !important; }
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 
+[data-testid="stExpander"] > details > summary {
+    display: none !important;
+}
+[data-testid="stExpander"] > details {
+    border: none !important;
+    background: transparent !important;
+}
+
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #071a4a 0%, #0d2b6e 60%, #1a3d8f 100%) !important;
     border-right: none !important;
@@ -300,20 +308,21 @@ header { visibility: hidden; }
 .agent-result-sub { font-size: 13px; color: #5a7abf; margin-bottom: 20px; }
 
 [data-testid="stChatInput"] {
-    background: white !important; border-radius: 20px !important;
-    border: 2px solid rgba(74,144,217,0.25) !important;
-    box-shadow: 0 4px 24px rgba(13,43,110,0.10) !important;
+    background: white !important; border-radius: 28px !important;
+    border: 1.5px solid rgba(74,144,217,0.25) !important;
+    box-shadow: none !important;
     padding: 4px 8px !important; transition: all 0.25s ease !important;
 }
 [data-testid="stChatInput"]:focus-within {
     border-color: #4a90d9 !important;
-    box-shadow: 0 4px 24px rgba(74,144,217,0.25) !important;
+    box-shadow: none !important;
 }
 [data-testid="stChatInput"] textarea {
     font-family: 'Nunito', sans-serif !important;
     font-size: 15px !important; color: #1a2b5e !important;
+    background: white !important;
 }
-[data-testid="stChatInput"] textarea::placeholder { color: #8aaee0 !important; }
+[data-testid="stChatInput"] textarea::placeholder { color: #5a7abf !important; }
 [data-testid="stChatInput"] button {
     background: linear-gradient(135deg, #4a90d9, #2563c7) !important;
     border-radius: 12px !important; border: none !important;
@@ -1468,12 +1477,176 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            with st.expander("🎤 Voice input", expanded=False):
-                audio = st.audio_input("Record your question")
+            # ── Input toolbar (mic + language) ───────────────────────────
+            st.markdown("""
+            <style>
+            .input-toolbar {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: white;
+                border: 1.5px solid rgba(74,144,217,0.25);
+                border-radius: 28px;
+                padding: 6px 10px;
+                margin-bottom: 6px;
+            }
+            .toolbar-lang-pill {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                background: #eef3ff;
+                border: 0.5px solid rgba(74,144,217,0.3);
+                border-radius: 20px;
+                padding: 5px 12px;
+                font-size: 12px;
+                font-weight: 800;
+                color: #2451b3;
+                cursor: pointer;
+                user-select: none;
+                white-space: nowrap;
+                font-family: 'Nunito', sans-serif;
+            }
+            .toolbar-divider {
+                width: 1px;
+                height: 22px;
+                background: rgba(74,144,217,0.15);
+                flex-shrink: 0;
+            }
+            .toolbar-mic {
+                width: 34px; height: 34px;
+                border-radius: 50%;
+                border: 0.5px solid rgba(74,144,217,0.2);
+                background: #eef3ff;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer;
+                flex-shrink: 0;
+                font-size: 16px;
+                transition: background 0.15s;
+            }
+            .toolbar-mic:hover { background: #dce8ff; }
+            .toolbar-mic.recording {
+                background: #ffeaea;
+                border-color: #dc3545;
+                animation: micpulse 1s infinite;
+            }
+            @keyframes micpulse {
+                0%, 100% { box-shadow: 0 0 0 3px rgba(220,53,69,0.15); }
+                50%       { box-shadow: 0 0 0 7px rgba(220,53,69,0.05); }
+            }
+            .toolbar-hint {
+                flex: 1;
+                font-size: 13px;
+                color: #5a7abf;
+                font-family: 'Nunito', sans-serif;
+            }
+            .lang-drop {
+                display: none;
+                position: absolute;
+                bottom: 110px;
+                left: 0;
+                background: white;
+                border: 0.5px solid rgba(74,144,217,0.2);
+                border-radius: 14px;
+                overflow: hidden;
+                box-shadow: 0 4px 20px rgba(13,43,110,0.12);
+                z-index: 999;
+                min-width: 150px;
+            }
+            .lang-drop.open { display: block; }
+            .lang-opt {
+                padding: 10px 18px;
+                font-size: 13px;
+                font-weight: 700;
+                color: #0d2b6e;
+                cursor: pointer;
+                font-family: 'Nunito', sans-serif;
+            }
+            .lang-opt:hover { background: #f0f4ff; }
+            .toolbar-wrap { position: relative; }
+            </style>
+
+            <div class="toolbar-wrap">
+            <div class="lang-drop" id="langDrop">
+                <div class="lang-opt" onclick="pickLang('English', '🇬🇧 EN')">🇬🇧 English</div>
+                <div class="lang-opt" onclick="pickLang('Hindi', '🇮🇳 HI')">🇮🇳 Hindi</div>
+                <div class="lang-opt" onclick="pickLang('Malayalam', '🌴 ML')">🌴 Malayalam</div>
+            </div>
+            <div class="input-toolbar">
+                <div class="toolbar-lang-pill" id="langPill" onclick="toggleLangDrop()">
+                🌐 <span id="langPillLabel">EN</span> ▾
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-mic" id="micBtn" onclick="toggleMic()">🎤</div>
+                <div class="toolbar-divider"></div>
+                <span class="toolbar-hint" id="toolbarHint">Tap mic to speak · or type below</span>
+            </div>
+            </div>
+
+            <script>
+            (function() {
+            function toggleLangDrop() {
+                document.getElementById('langDrop').classList.toggle('open');
+            }
+            function pickLang(full, label) {
+                document.getElementById('langPillLabel').textContent = label.split(' ')[1];
+                document.getElementById('langDrop').classList.remove('open');
+                window._selectedLang = full;
+            }
+            var isRecording = false;
+            var recognition = null;
+            function toggleMic() {
+                if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                document.getElementById('toolbarHint').textContent = 'Speech not supported — use Chrome';
+                return;
+                }
+                if (isRecording) {
+                recognition && recognition.stop();
+                return;
+                }
+                var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SR();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.onstart = function() {
+                isRecording = true;
+                document.getElementById('micBtn').classList.add('recording');
+                document.getElementById('micBtn').textContent = '🔴';
+                document.getElementById('toolbarHint').textContent = 'Listening… speak now';
+                };
+                recognition.onresult = function(e) {
+                var t = e.results[0][0].transcript;
+                document.getElementById('toolbarHint').textContent = '✓ Got: "' + t + '"';
+                window._voiceTranscript = t;
+                };
+                recognition.onerror = function() {
+                document.getElementById('toolbarHint').textContent = 'Could not hear — try again';
+                };
+                recognition.onend = function() {
+                isRecording = false;
+                document.getElementById('micBtn').classList.remove('recording');
+                document.getElementById('micBtn').textContent = '🎤';
+                };
+                recognition.start();
+            }
+            window.toggleLangDrop = toggleLangDrop;
+            window.pickLang = pickLang;
+            window.toggleMic = toggleMic;
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#langPill') && !e.target.closest('#langDrop')) {
+                var d = document.getElementById('langDrop');
+                if (d) d.classList.remove('open');
+                }
+            });
+            })();
+            </script>
+            """, unsafe_allow_html=True)
+
+            # ── Hidden Groq Whisper audio input (still powers transcription) ──
+            with st.expander("", expanded=False):
+                audio = st.audio_input("", label_visibility="collapsed")
                 if audio:
                     audio_bytes = audio.read()
                     audio_id = hash(audio_bytes)
-
                     if audio_id != st.session_state.get("last_audio_id"):
                         st.session_state["last_audio_id"] = audio_id
                         with st.spinner("Transcribing…"):
