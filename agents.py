@@ -15,22 +15,25 @@ Agents:
 from __future__ import annotations
 
 import os
+import textwrap
+from collections import defaultdict
+from datetime import datetime
 from typing import Any
 import resend
 from pathlib import Path
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 
 # ── Shared LLM factory ────────────────────────────────────────────────────────
 
-def _llm(max_tokens: int = 800) -> ChatGoogleGenerativeAI:
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+def _llm(max_tokens: int = 800) -> ChatGroq:
+    return ChatGroq(
+        model_name="llama-3.3-70b-versatile",
         temperature=0.1,
-        max_output_tokens=max_tokens,
+        max_tokens=max_tokens,
     )
 
 
@@ -351,11 +354,37 @@ Email:
                 break
         body = "\n".join(body_lines).strip()
 
-        return (
-            f"**📧 Draft Email Ready**\n\n"
-            f"**Subject:** {subject}\n\n"
-            f"---\n\n{body}"
-        )
+        # No recipient yet — return draft only
+        if not recipient_email:
+            return (
+                f"**📧 Draft Email Ready**\n\n"
+                f"**To:** (no recipient set)\n"
+                f"**Subject:** {subject}\n\n"
+                f"---\n\n{body}"
+            )
+
+        # Send via Resend
+        try:
+            resend.api_key = os.getenv("RESEND_API_KEY")
+            footer = "\n\n---\nSent via MediChat. For informational purposes only. Always consult your doctor."
+            resend.Emails.send({
+                "from": "MediChat <onboarding@resend.dev>",
+                "to": recipient_email,
+                "subject": subject,
+                "text": body + footer,
+            })
+            return (
+                f"✅ **Email sent successfully!**\n\n"
+                f"**To:** {recipient_email}\n"
+                f"**Subject:** {subject}\n\n"
+                f"---\n\n{body}"
+            )
+        except Exception as e:
+            return (
+                f"❌ **Failed to send:** {e}\n\n"
+                f"**Draft (copy this manually):**\n\n"
+                f"**Subject:** {subject}\n\n{body}"
+            )
 
 # ── 6. Medical Image Explainer Agent ─────────────────────────
 

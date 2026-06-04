@@ -1,5 +1,5 @@
 from collections import defaultdict
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
@@ -231,11 +231,10 @@ def build_qa_chain(vectorstore: Chroma, mood: str = "Neutral"):
         "Strong":    700,
         "Patient":   700,
     }
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+    llm = ChatGroq(
+        model_name="llama-3.3-70b-versatile",
         temperature=0.1,
-        max_output_tokens=MOOD_MAX_TOKENS.get(mood, 500),
-        convert_system_message_to_human=True,
+        max_tokens=MOOD_MAX_TOKENS.get(mood, 500),
     )
     retriever = vectorstore.as_retriever(
         search_type="mmr",
@@ -324,9 +323,7 @@ def get_answer(
             if condition in CONDITION_TERMS:
                 extra_terms.append(CONDITION_TERMS[condition])
         if extra_terms:
-            combined = " ".join(extra_terms).split()
-            unique_terms = " ".join(dict.fromkeys(combined))
-            enriched_question = question + " " + unique_terms
+            enriched_question = question + " " + " ".join(extra_terms)
 
     docs = retriever.invoke(enriched_question)
 
