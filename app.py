@@ -4,6 +4,7 @@ import os
 import io
 import uuid
 import shutil
+import hashlib
 from datetime import datetime
 from dotenv import load_dotenv
 from ingest import ingest_multiple_files
@@ -536,9 +537,9 @@ def _set_welcome_message():
     st.session_state.chat_history = [{"role": "assistant", "content": mood_responses.get(mood, mood_responses["Neutral"])}]
     lang = st.session_state.get("user_language", "English")
     if lang != "English":
-        from langchain_groq import ChatGroq
+        from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.output_parsers import StrOutputParser
-        _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+        _llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, convert_system_message_to_human=True)
         msg = st.session_state.chat_history[0]["content"]
         translated = (_llm | StrOutputParser()).invoke(
             f"Translate this exactly to {lang}, keep the same warm friendly tone, keep emojis: {msg}"
@@ -566,9 +567,9 @@ def _set_docs_ready_message():
     st.session_state.chat_history = [{"role": "assistant", "content": mood_responses.get(mood, mood_responses["Neutral"])}]
     lang = st.session_state.get("user_language", "English")
     if lang != "English":
-        from langchain_groq import ChatGroq
+        from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.output_parsers import StrOutputParser
-        _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+        _llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, convert_system_message_to_human=True)
         msg = st.session_state.chat_history[0]["content"]
         translated = (_llm | StrOutputParser()).invoke(
             f"Translate this exactly to {lang}, keep the same warm friendly tone, keep emojis: {msg}"
@@ -884,6 +885,8 @@ with st.sidebar:
                     mime="application/pdf",
                     use_container_width=True,
                 )
+            else:
+                st.warning("PDF export unavailable. Download as Text instead.")
 
         st.markdown("---")
         st.markdown('<p class="sidebar-section-label">Try asking</p>', unsafe_allow_html=True)
@@ -949,17 +952,14 @@ with st.sidebar:
     )
     if selected_lang != st.session_state.get("user_language", "English"):
         st.session_state.user_language = selected_lang
-        from langchain_groq import ChatGroq
+        from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.output_parsers import StrOutputParser
-        _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+        _llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.1, convert_system_message_to_human=True)
         ack = (_llm | StrOutputParser()).invoke(
             f"In {selected_lang} only, write one short warm sentence (max 12 words) saying you'll now respond in {selected_lang}. Keep emojis."
         )
         st.session_state.chat_history.append({"role": "assistant", "content": ack})
         st.rerun()
-    else:
-        st.session_state.user_language = selected_lang
-
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
         "<p style='font-size:11px; color:#4a6a9a; text-align:center; line-height:1.6;'>"
@@ -1472,7 +1472,7 @@ with main_col:
                 audio = st.audio_input("Record your question")
                 if audio:
                     audio_bytes = audio.read()
-                    audio_id = hash(audio_bytes)
+                    audio_id = hashlib.md5(audio_bytes).hexdigest()
 
                     if audio_id != st.session_state.get("last_audio_id"):
                         st.session_state["last_audio_id"] = audio_id

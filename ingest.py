@@ -2,7 +2,6 @@ import fitz
 import base64
 import os
 import uuid
-import shutil
 from pathlib import Path
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -30,7 +29,7 @@ def get_embeddings() -> HuggingFaceEmbeddings:
     return _embeddings
 
 def summarise_document(chunks: list[str], doc_name: str) -> str:
-    from langchain_groq import ChatGroq
+    from langchain_google_genai import ChatGoogleGenerativeAI
     from langchain_core.output_parsers import StrOutputParser
     if len(chunks) <= 6:
         selected = chunks
@@ -51,7 +50,7 @@ Report content:
 
 Explanation (plain conversational paragraphs only, no formatting):"""
 
-    llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.3)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3, convert_system_message_to_human=True)
     return (llm | StrOutputParser()).invoke(prompt)
 
 
@@ -229,7 +228,11 @@ def ingest_multiple_files(
             for i, chunk in enumerate(chunks)
         ]
         all_chunks.extend(documents)
-        summaries[original_name] = summarise_document(chunks, original_name)
+        try:
+            summaries[original_name] = summarise_document(chunks, original_name)
+        except Exception as e:
+            print(f"[ingest] Summary failed for {original_name}: {e}")
+            summaries[original_name] = "Summary unavailable for this document."
         print(f"[ingest] {original_name} → {len(chunks)} chunks")
 
     if skipped:
