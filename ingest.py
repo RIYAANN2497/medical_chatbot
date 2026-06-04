@@ -229,8 +229,11 @@ def ingest_multiple_files(
             for i, chunk in enumerate(chunks)
         ]
         all_chunks.extend(documents)
-        summaries[original_name] = summarise_document(chunks, original_name)
-        print(f"[ingest] {original_name} → {len(chunks)} chunks")
+        try:
+            summaries[original_name] = summarise_document(chunks, original_name)
+        except Exception as e:
+            print(f"[ingest] Summary failed for {original_name}: {e}")
+            summaries[original_name] = "Summary unavailable for this document."
 
     if skipped:
         print(f"[ingest] Skipped unsupported files: {', '.join(skipped)}")
