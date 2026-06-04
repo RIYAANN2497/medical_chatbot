@@ -158,7 +158,7 @@ Answer:
 # FIX: Maximum number of context *parts* (one per source document) to include.
 # Truncation now happens at whole-chunk boundaries instead of mid-string,
 # so the tail of a value/sentence is never silently cut.
-MAX_CONTEXT_CHARS = 12_000
+MAX_CONTEXT_CHARS = 6_000
 
 
 def format_docs(docs):
@@ -174,7 +174,7 @@ def format_chat_history(chat_history: list) -> str:
     The function simply formats whatever it receives.
     """
     lines = []
-    for msg in chat_history[-8:]:
+    for msg in chat_history[-6:]:
         role = "Patient" if msg["role"] == "user" else "Assistant"
         lines.append(f"{role}: {msg['content']}")
     return "\n".join(lines) if lines else "None"

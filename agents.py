@@ -395,7 +395,7 @@ class ImageExplainerAgent:
 
         results = []
         for img_name, img_text in image_entries.items():
-
+            img_text = img_text[:2500] 
             # ── CHANGED: organ-agnostic prompt, works for chest/knee/brain/spine etc. ──
             prompt = f"""You are MediChat's Image Explainer. A patient uploaded a medical image: "{img_name}".
 
@@ -431,7 +431,7 @@ Clinical description from vision model:
             llm_instance = ChatGroq(
                 model_name="llama-3.3-70b-versatile",
                 temperature=0.1,
-                max_tokens=1000,
+                max_tokens=700,
             )
             chain = PromptTemplate.from_template("{prompt}") | llm_instance | StrOutputParser()
             result = chain.invoke({"prompt": prompt})

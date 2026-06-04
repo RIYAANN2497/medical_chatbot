@@ -199,7 +199,7 @@ def extract_text_from_image(image_path: str) -> str:
                     ],
                 }
             ],
-            max_tokens=2048,
+            max_tokens=1024,
         )
         return response.choices[0].message.content
     except Exception as e:
@@ -265,7 +265,7 @@ def ingest_multiple_files(
         # ── CHANGED: images get special handling ──────────────────────────────
         if ext in SUPPORTED_IMAGES:
             # Store raw clinical description for ImageExplainerAgent
-            image_texts[original_name] = raw_text
+            image_texts[original_name] = raw_text[:3000]
             # Store a short friendly summary for the Docs tab
             try:
                 summaries[original_name] = summarise_image_document(raw_text, original_name)
