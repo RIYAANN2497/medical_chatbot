@@ -16,7 +16,6 @@ load_dotenv()
 
 import re as _re
 
-# ── Markdown → safe HTML renderer ────────────────────────────
 def _render_message(raw: str) -> str:
     import re as _re2
     parts = []
@@ -57,7 +56,6 @@ def _render_message(raw: str) -> str:
     return "".join(parts)
 
 
-# ── Appointment renderer ──────────────────────────────────────
 def _render_appointment(raw: str):
     import re as re2
     sections = re2.split(r'\n(?=\*\*[📅🧪💊💡])', raw.strip())
@@ -134,7 +132,6 @@ def _render_appointment(raw: str):
         )
 
 
-# ── Page config ───────────────────────────────────────────────
 st.set_page_config(
     page_title="MediChat — Your Medical Assistant",
     page_icon="🏥",
@@ -142,8 +139,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-
-# ── Global CSS ────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap');
@@ -398,6 +393,7 @@ defaults = {
     "onboarding_done": False,
     "chroma_dir": None,
     "summaries": {},
+    "image_texts": {},          # ← stores raw clinical vision descriptions
     "processing": False,
     "session_id": str(uuid.uuid4()),
     "user_name": "",
@@ -576,7 +572,6 @@ def _set_docs_ready_message():
         st.session_state.chat_history[0]["content"] = translated
 
 
-# ── Onboarding dialog ─────────────────────────────────────────
 @st.dialog("Welcome to MediChat", width="large")
 def show_onboarding():
     st.markdown("""
@@ -768,7 +763,6 @@ def show_onboarding():
                 st.rerun()
 
 
-# ── ONBOARDING GATE ───────────────────────────────────────────
 if not st.session_state.get("onboarding_done", False):
     show_onboarding()
     st.stop()
@@ -1004,13 +998,17 @@ if st.session_state.get("processing"):
         if st.session_state.chroma_dir and os.path.exists(st.session_state.chroma_dir):
             shutil.rmtree(st.session_state.chroma_dir, ignore_errors=True)
         st.session_state.chroma_dir = None
-        vectorstore, chroma_dir, summaries = ingest_multiple_files(tmp_paths, original_names, session_id=st.session_state.session_id)
+        # ── CHANGED: unpack 4 values now ─────────────────────────────────────
+        vectorstore, chroma_dir, summaries, image_texts = ingest_multiple_files(
+            tmp_paths, original_names, session_id=st.session_state.session_id
+        )
         llm, retriever = build_qa_chain(vectorstore, mood=st.session_state.user_mood)
         st.session_state.llm = llm
         st.session_state.retriever = retriever
         st.session_state.chroma_dir = chroma_dir
         st.session_state.uploaded_names = original_names
         st.session_state.summaries = summaries
+        st.session_state.image_texts = image_texts   # ← save image descriptions
         _set_docs_ready_message()
     except Exception as e:
         st.session_state.processing_error = str(e)
@@ -1142,6 +1140,7 @@ with main_col:
                             user_age=st.session_state.user_age,
                             user_conditions=st.session_state.user_conditions,
                             summaries=st.session_state.summaries,
+                            image_texts=st.session_state.get("image_texts", {}),  # ← ADDED
                             smtp_config=st.session_state.get("smtp_config"),
                             recipient_email=st.session_state.get("recipient_email", ""),
                         )
@@ -1352,6 +1351,7 @@ with main_col:
                                         user_age=st.session_state.user_age,
                                         user_conditions=st.session_state.user_conditions,
                                         summaries=st.session_state.summaries,
+                                        image_texts=st.session_state.get("image_texts", {}),  # ← ADDED
                                         smtp_config=st.session_state.get("smtp_config"),
                                         recipient_email=st.session_state.get("recipient_email", ""),
                                     )
@@ -1490,7 +1490,6 @@ with main_col:
                             except Exception as e:
                                 st.error(f"Transcription failed: {e}")
 
-            # ── Text input ────────────────────────────────────
             user_input = st.chat_input("Ask about your medical documents…")
 
             if not user_input:

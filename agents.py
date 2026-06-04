@@ -1,15 +1,5 @@
 """
 agents.py — MediChat Multi-Agent System
-========================================
-Five specialised agents, each with a run() method.
-An Orchestrator class routes to the correct agent based on selection.
-
-Agents:
-  1. SummarizerAgent      — structured full-document summary
-  2. LabAnalyzerAgent     — flags & explains abnormal lab values
-  3. MedicationAgent      — extracts medications, dosages, instructions
-  4. AppointmentAgent     — extracts dates, follow-ups, reminders
-  5. EmailAgent           — composes & sends report via SMTP
 """
 
 from __future__ import annotations
@@ -27,8 +17,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 
 
-# ── Shared LLM factory ────────────────────────────────────────────────────────
-
 def _llm(max_tokens: int = 800) -> ChatGroq:
     return ChatGroq(
         model_name="llama-3.3-70b-versatile",
@@ -38,13 +26,12 @@ def _llm(max_tokens: int = 800) -> ChatGroq:
 
 
 def _invoke(prompt_template: str, variables: dict, max_tokens: int = 800) -> str:
-    """Helper: build a simple chain and invoke it."""
     pt = PromptTemplate.from_template(prompt_template)
     chain = pt | _llm(max_tokens) | StrOutputParser()
     return chain.invoke(variables)
 
+
 def _get_context(retriever, query: str, max_chars: int = 10_000) -> str:
-    """Retrieve relevant chunks and join them, capped at max_chars."""
     docs = retriever.invoke(query)
     parts: list[str] = []
     total = 0
@@ -55,23 +42,18 @@ def _get_context(retriever, query: str, max_chars: int = 10_000) -> str:
         parts.append(chunk)
         total += len(chunk)
     return "\n\n".join(parts)
-    
+
+
 def _require_context(retriever, query: str, agent_name: str) -> str | None:
-    """Returns context string, or None if nothing was retrieved."""
     context = _get_context(retriever, query)
     if not context.strip():
         return None
     return context
 
 
-
-
-
 # ── 1. Summarizer Agent ───────────────────────────────────────────────────────
 
 class SummarizerAgent:
-    """Produces a structured, easy-to-read summary of all uploaded documents."""
-
     NAME = "📋 Summarizer"
     DESCRIPTION = "Get a full structured summary of all your uploaded documents."
 
@@ -123,8 +105,6 @@ Summary:
 # ── 2. Lab Analyzer Agent ─────────────────────────────────────────────────────
 
 class LabAnalyzerAgent:
-    """Extracts and interprets all lab/test values, flagging abnormal results."""
-
     NAME = "🔬 Lab Analyzer"
     DESCRIPTION = "Analyze all lab results — flags abnormal values and explains what they mean."
 
@@ -164,8 +144,6 @@ Analysis:
 # ── 3. Medication Agent ───────────────────────────────────────────────────────
 
 class MedicationAgent:
-    """Extracts all medications with dosages, frequency, and instructions."""
-
     NAME = "💊 Medication Agent"
     DESCRIPTION = "Extract all prescribed medications, dosages, and instructions."
 
@@ -209,8 +187,6 @@ Medications:
 # ── 4. Appointment / Reminder Agent ──────────────────────────────────────────
 
 class AppointmentAgent:
-    """Extracts follow-up dates, appointments, and generates reminders."""
-
     NAME = "📅 Appointment Reminder"
     DESCRIPTION = "Find all follow-up dates and appointments in your documents."
 
@@ -267,8 +243,6 @@ Appointments and Reminders:
 # ── 5. Email Agent ────────────────────────────────────────────────────────────
 
 class EmailAgent:
-    """Composes a professional medical summary email and sends it via SMTP."""
-
     NAME = "📧 Email Report"
     DESCRIPTION = "Send a medical summary report to a doctor or hospital via email."
 
@@ -342,7 +316,6 @@ Email:
             max_tokens=600,
         )
 
-        # Parse subject line
         lines = composed.strip().split("\n")
         subject = "Medical Report Summary — MediChat"
         body_lines = lines
@@ -354,7 +327,6 @@ Email:
                 break
         body = "\n".join(body_lines).strip()
 
-        # No recipient yet — return draft only
         if not recipient_email:
             return (
                 f"**📧 Draft Email Ready**\n\n"
@@ -363,7 +335,6 @@ Email:
                 f"---\n\n{body}"
             )
 
-        # Send via Resend
         try:
             resend.api_key = os.getenv("RESEND_API_KEY")
             footer = "\n\n---\nSent via MediChat. For informational purposes only. Always consult your doctor."
@@ -386,65 +357,99 @@ Email:
                 f"**Subject:** {subject}\n\n{body}"
             )
 
-# ── 6. Medical Image Explainer Agent ─────────────────────────
+
+# ── 6. Medical Image Explainer Agent ─────────────────────────────────────────
 
 class ImageExplainerAgent:
-    """Explains medical images (X-rays, scans) in simple language."""
-
+    """
+    CHANGED: Now reads from image_texts (raw clinical vision descriptions)
+    instead of summaries. Works for ANY body part or organ.
+    """
     NAME = "🩻 Image Explainer"
-    DESCRIPTION = "Upload an X-ray or scan and get a plain-language explanation."
+    DESCRIPTION = "Upload any medical image and get a plain-language explanation."
 
-    def run(self, retriever, summaries: dict | None = None, **_) -> str:
-        # Use the stored summary/context from the image if it was uploaded
-        if summaries:
-            image_summaries = {
-                name: summary for name, summary in summaries.items()
-                if Path(name).suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
-            }
-            if not image_summaries:
-                return "⚠️ No medical images found. Please upload an X-ray or scan (JPG, PNG, WEBP) and process it first."
+    def run(self, retriever, summaries: dict | None = None,
+            image_texts: dict | None = None, **_) -> str:
 
-            results = []
-            for img_name, img_text in image_summaries.items():
-                prompt = f"""You are MediChat's Image Explainer. A patient has uploaded a medical image called "{img_name}".
+        # ── CHANGED: prefer image_texts (raw clinical descriptions) ──────────
+        # Fall back to summaries only if image_texts not available (old sessions)
+        source = image_texts if image_texts else summaries
 
-Below is the extracted content from that image. Your job is to explain it in two versions:
+        if not source:
+            return (
+                "⚠️ No medical images found. Please upload a medical image "
+                "(X-ray, MRI, CT scan, ultrasound — JPG, PNG, or WEBP) and process it first."
+            )
 
-**🧑 Patient Version**
-Write 3-4 casual, warm sentences a non-medical person can understand. No jargon. Use simple analogies. Be reassuring but honest. Don't diagnose — just explain what you see described.
+        SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+        image_entries = {
+            name: text for name, text in source.items()
+            if Path(name).suffix.lower() in SUPPORTED_EXTS
+        }
 
-**👨‍⚕️ Doctor Version**
-Write a brief clinical summary in 3-4 sentences using proper medical terminology. Include findings, any notable observations, and suggest what follow-up might be relevant.
+        if not image_entries:
+            return (
+                "⚠️ No medical images found in your uploaded files. "
+                "Please upload a medical image (JPG, PNG, or WEBP) and process it first."
+            )
 
-**⚠️ Important Disclaimer**
-Always end with: "This is an AI-assisted explanation only. Always consult a qualified radiologist or doctor for an accurate diagnosis."
+        results = []
+        for img_name, img_text in image_entries.items():
 
-Image content:
+            # ── CHANGED: organ-agnostic prompt, works for chest/knee/brain/spine etc. ──
+            prompt = f"""You are MediChat's Image Explainer. A patient uploaded a medical image: "{img_name}".
+
+Below is a detailed clinical description of that image produced by a vision model.
+Your job is to explain it clearly in two versions.
+
+**🧑 For the Patient**
+Write 4-5 warm, plain-English sentences a non-medical person can understand.
+- Start by saying what body part and type of scan this is.
+- Use simple analogies (e.g. "your knee joint looks well-aligned" or "there's a small shadow in the lower part of the lung").
+- Point out what looks normal and mention anything that stands out without alarming.
+- Do NOT give a diagnosis or suggest treatment.
+- End with: "Your doctor is the right person to explain exactly what this means for you."
+
+**👨‍⚕️ Clinical Summary (for the Doctor)**
+Write a structured clinical summary using proper medical terminology:
+- Imaging modality and body region
+- Primary structures visible
+- Key findings (normal and abnormal)
+- Any notable abnormalities, asymmetry, or areas of concern
+- Overall impression
+- Suggested follow-up if warranted
+
+**⚠️ Disclaimer**
+This is an AI-assisted interpretation for informational purposes only.
+Always consult a qualified radiologist or physician for an accurate diagnosis.
+
+Clinical description from vision model:
 {img_text}
 """
-                result = _invoke(prompt, {}, max_tokens=800)
-                results.append(f"### {img_name}\n\n{result}")
+            # ── END CHANGED ───────────────────────────────────────────────────
 
-            return "\n\n---\n\n".join(results)
+            llm_instance = ChatGroq(
+                model_name="llama-3.3-70b-versatile",
+                temperature=0.1,
+                max_tokens=1000,
+            )
+            chain = PromptTemplate.from_template("{prompt}") | llm_instance | StrOutputParser()
+            result = chain.invoke({"prompt": prompt})
+            results.append(f"### {img_name}\n\n{result}")
 
-        return "⚠️ No image content found. Please upload and process a medical image first."
+        return "\n\n---\n\n".join(results)
 
 
 # ── Orchestrator ──────────────────────────────────────────────────────────────
 
 class AgentOrchestrator:
-    """
-    Routes user selection to the correct agent and returns the result.
-    All agents share the same retriever from the vectorstore.
-    """
-
     AGENTS: list[type] = [
         SummarizerAgent,
         LabAnalyzerAgent,
         MedicationAgent,
         AppointmentAgent,
         EmailAgent,
-        ImageExplainerAgent,  # ← add this
+        ImageExplainerAgent,
     ]
 
     def __init__(self):
@@ -461,12 +466,6 @@ class AgentOrchestrator:
         return {cls.NAME: cls.DESCRIPTION for cls in self.AGENTS}
 
     def run(self, agent_name: str, retriever, **kwargs) -> str:
-        """
-        Run the selected agent.
-
-        kwargs are passed through to the agent's run() method —
-        include user_name, mood, user_whom, smtp_config, recipient_email, summaries etc.
-        """
         agent = self._instances.get(agent_name)
         if agent is None:
             return f"❌ Unknown agent: {agent_name}"
