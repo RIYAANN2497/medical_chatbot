@@ -585,7 +585,6 @@ header { visibility: hidden; }
 
 [data-testid="stFileUploader"]:hover { border-color: rgba(74,144,217,0.9) !important; }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 90px !important; border: none !important; background: transparent !important; flex-direction: column !important; gap: 0 !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > *:not(button) { display: none !important; }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button {
     width: 48px !important;
     height: 48px !important;
