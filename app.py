@@ -1462,8 +1462,6 @@ with st.sidebar:
         )
         st.session_state.chat_history.append({"role": "assistant", "content": ack})
         st.rerun()
-    else:
-        st.session_state.user_language = selected_lang
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
@@ -1982,11 +1980,15 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            col_input, col_mic, col_lang = st.columns([7, 2, 2])
+            user_input = st.chat_input("Ask about your medical documents…")
+
+            col_mic, col_lang, col_spacer = st.columns([2, 2, 7])
 
             with col_mic:
-                audio = st.audio_input("🎤", label_visibility="visible",
-                                    key=f"audio_input_{st.session_state.get('audio_key', 0)}")
+                audio = st.audio_input(
+                    "🎤 Voice input",
+                    key=f"audio_input_{st.session_state.get('audio_key', 0)}",
+                )
 
             with col_lang:
                 lang_options = ["English", "Hindi", "Malayalam"]
@@ -1995,8 +1997,6 @@ with main_col:
                     "Language",
                     options=lang_options,
                     index=lang_options.index(current_lang),
-                    format_func=lambda x: x,
-                    label_visibility="collapsed",
                     key="inline_lang_selector",
                 )
                 if selected_lang != st.session_state.get("user_language", "English"):
@@ -2009,9 +2009,6 @@ with main_col:
                     )
                     st.session_state.chat_history.append({"role": "assistant", "content": ack})
                     st.rerun()
-
-            with col_input:
-                user_input = st.chat_input("Ask about your medical documents…")
 
             if audio:
                 audio_bytes = audio.read()
