@@ -734,6 +734,32 @@ header { visibility: hidden; }
 
 [data-testid="stAlert"] { border-radius: 14px !important; border: none !important; font-family: 'Nunito', sans-serif !important; font-size: 14px !important; }
 
+[data-testid="stAudioInput"] span,
+[data-testid="stAudioInput"] p,
+[data-testid="stAudioInput"] time,
+[data-testid="stAudioInput"] > div > div:not(:first-child) {
+    display: none !important;
+}
+[data-testid="stAudioInput"] button {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    background: rgba(74,144,217,0.12) !important;
+    border: 1.5px solid rgba(74,144,217,0.35) !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+}
+[data-testid="stAudioInput"] button:hover {
+    background: rgba(74,144,217,0.22) !important;
+    border-color: rgba(74,144,217,0.6) !important;
+    transform: scale(1.05) !important;
+}
+[data-testid="stAudioInput"] button svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(74,144,217,0.3); border-radius: 10px; }
@@ -1833,11 +1859,34 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            col_input, col_mic = st.columns([12, 1])
+            col_input, col_mic, col_lang = st.columns([11, 1, 1])
 
             with col_mic:
                 audio = st.audio_input("🎤", label_visibility="collapsed",
                                     key=f"audio_input_{st.session_state.get('audio_key', 0)}")
+
+            with col_lang:
+                lang_options = ["English", "Hindi", "Malayalam"]
+                current_lang = st.session_state.get("user_language", "English")
+                lang_icons = {"English": "🌐", "Hindi": "🇮🇳", "Malayalam": "🌴"}
+                selected_lang = st.selectbox(
+                    "Language",
+                    options=lang_options,
+                    index=lang_options.index(current_lang),
+                    format_func=lambda x: lang_icons[x],
+                    label_visibility="collapsed",
+                    key="inline_lang_selector",
+                )
+                if selected_lang != st.session_state.get("user_language", "English"):
+                    st.session_state.user_language = selected_lang
+                    from langchain_groq import ChatGroq
+                    from langchain_core.output_parsers import StrOutputParser
+                    _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
+                    ack = (_llm | StrOutputParser()).invoke(
+                        f"In {selected_lang} only, write one short warm sentence (max 12 words) saying you'll now respond in {selected_lang}. Keep emojis."
+                    )
+                    st.session_state.chat_history.append({"role": "assistant", "content": ack})
+                    st.rerun()
 
             with col_input:
                 user_input = st.chat_input("Ask about your medical documents…")
