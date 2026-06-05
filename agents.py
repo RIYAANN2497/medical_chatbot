@@ -358,21 +358,15 @@ Email:
             )
 
 
-# ── 6. Medical Image Explainer Agent ─────────────────────────────────────────
+# ── 6. Scan Interpreter Agent ─────────────────────────────────────────────────
 
 class ImageExplainerAgent:
-    """
-    CHANGED: Now reads from image_texts (raw clinical vision descriptions)
-    instead of summaries. Works for ANY body part or organ.
-    """
-    NAME = "🩻 Image Explainer"
-    DESCRIPTION = "Upload any medical image and get a plain-language explanation."
+    NAME = "🩻 Scan Interpreter"
+    DESCRIPTION = "Decode any medical scan or image in plain language — what it shows, what's normal, and what to ask your doctor."
 
     def run(self, retriever, summaries: dict | None = None,
             image_texts: dict | None = None, **_) -> str:
 
-        # ── CHANGED: prefer image_texts (raw clinical descriptions) ──────────
-        # Fall back to summaries only if image_texts not available (old sessions)
         source = image_texts if image_texts else summaries
 
         if not source:
@@ -395,47 +389,53 @@ class ImageExplainerAgent:
 
         results = []
         for img_name, img_text in image_entries.items():
-            img_text = img_text[:2500] 
-            # ── CHANGED: organ-agnostic prompt, works for chest/knee/brain/spine etc. ──
-            prompt = f"""You are MediChat's Image Explainer. A patient uploaded a medical image: "{img_name}".
+            img_text = img_text[:2500]
+            prompt = f"""You are MediChat's Scan Interpreter. A patient uploaded a medical scan.
 
-Below is a detailed clinical description of that image produced by a vision model.
-Your job is to explain it clearly in two versions.
+Below is a clinical description of that scan from a vision model.
+Your job: turn this into something a real person can actually understand and feel informed by.
 
-**🧑 For the Patient**
-Write 4-5 warm, plain-English sentences a non-medical person can understand.
-- Start by saying what body part and type of scan this is.
-- Use simple analogies (e.g. "your knee joint looks well-aligned" or "there's a small shadow in the lower part of the lung").
-- Point out what looks normal and mention anything that stands out without alarming.
-- Do NOT give a diagnosis or suggest treatment.
-- End with: "Your doctor is the right person to explain exactly what this means for you."
+Format your response EXACTLY like this — no deviation:
 
-**👨‍⚕️ Clinical Summary (for the Doctor)**
-Write a structured clinical summary using proper medical terminology:
-- Imaging modality and body region
-- Primary structures visible
-- Key findings (normal and abnormal)
-- Any notable abnormalities, asymmetry, or areas of concern
+## 🔍 What kind of scan is this?
+One sentence. Say what type of scan (X-ray / MRI / CT / ultrasound etc.) and what body part it's showing. Keep it super simple — like you're telling a friend.
+
+## 🫀 What's in the picture?
+Write 3–4 bullet points describing the main things visible in the scan. Use plain English. For each one, if it looks normal say so clearly. If something stands out, mention it gently without alarming.
+Use this format for each bullet:
+- **[Structure or area]** — [what it looks like in plain words]
+
+## ✅ What looks good
+1–2 sentences on what appears normal or healthy. Be warm and reassuring where genuine.
+
+## 🔶 What's worth noting
+If there's anything unusual, borderline, or worth a conversation with the doctor — list it here clearly in plain language. If nothing stands out, write: "Nothing alarming jumps out — but your doctor will confirm."
+
+## 💬 What to ask your doctor
+Give 2–3 specific questions the patient can bring to their next appointment based on what's in this scan. Make them practical and easy to say out loud.
+
+## 👨‍⚕️ Clinical summary (for your doctor's reference)
+A brief, structured clinical note using proper terminology:
+- Modality & region
+- Key structures visible
+- Findings (normal + abnormal)
 - Overall impression
-- Suggested follow-up if warranted
 
-**⚠️ Disclaimer**
-This is an AI-assisted interpretation for informational purposes only.
-Always consult a qualified radiologist or physician for an accurate diagnosis.
+---
+⚠️ *This is an AI-assisted interpretation for general awareness only. Always consult a qualified radiologist or physician for diagnosis and treatment decisions.*
 
-Clinical description from vision model:
+Clinical description:
 {img_text}
 """
-            # ── END CHANGED ───────────────────────────────────────────────────
 
             llm_instance = ChatGroq(
                 model_name="llama-3.3-70b-versatile",
-                temperature=0.1,
-                max_tokens=700,
+                temperature=0.15,
+                max_tokens=900,
             )
             chain = PromptTemplate.from_template("{prompt}") | llm_instance | StrOutputParser()
             result = chain.invoke({"prompt": prompt})
-            results.append(f"### {img_name}\n\n{result}")
+            results.append(result)
 
         return "\n\n---\n\n".join(results)
 

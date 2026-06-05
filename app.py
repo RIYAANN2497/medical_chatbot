@@ -131,6 +131,155 @@ def _render_appointment(raw: str):
             unsafe_allow_html=True,
         )
 
+def _render_scan_result(raw: str):
+    import re as re3
+    import html as _html
+
+    parts = re3.split(r'\n##\s+', raw.strip())
+    sections = {}
+    for part in parts:
+        lines = part.strip().split("\n")
+        if not lines:
+            continue
+        header_raw = lines[0]
+        body = "\n".join(lines[1:]).strip()
+        header_clean = re3.sub(r'[^\w\s]', '', header_raw).strip().lower()
+        sections[header_clean] = body
+
+    def get(keys):
+        for k in keys:
+            for sk, sv in sections.items():
+                if k in sk:
+                    return sv
+        return ""
+
+    scan_type    = get(["what kind", "kind of scan"])
+    in_picture   = get(["picture", "whats in"])
+    looks_good   = get(["looks good", "what looks"])
+    worth_noting = get(["worth noting", "noting"])
+    ask_doctor   = get(["ask your doctor", "ask"])
+    clinical     = get(["clinical summary", "clinical"])
+
+    def bullets_html(text):
+        items = [l.lstrip("-* ").strip() for l in text.split("\n") if l.strip().startswith(("-", "*", "•"))]
+        if not items:
+            items = [s.strip() for s in text.split("\n") if s.strip()]
+        out = ""
+        for item in items:
+            bold_part = re3.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', _html.escape(item))
+            out += (
+                "<div style='display:flex;gap:12px;align-items:flex-start;padding:10px 0;"
+                "border-bottom:1px solid #eef2ff;'>"
+                "<span style='color:#4a90d9;font-size:16px;flex-shrink:0;margin-top:2px;'>▸</span>"
+                f"<span style='font-size:14px;color:#1a1a2e;line-height:1.6;'>{bold_part}</span>"
+                "</div>"
+            )
+        return out
+
+    q_items = [l.lstrip("-* 0123456789.").strip() for l in ask_doctor.split("\n") if l.strip() and len(l.strip()) > 8]
+
+    q_cards = ""
+    for q in q_items[:4]:
+        safe_q = _html.escape(q)
+        q_cards += (
+            "<div style='position:relative;background:#f0f4ff;border:1.5px solid #c5d4f5;"
+            "border-radius:14px;padding:14px 42px 14px 16px;margin-bottom:10px;"
+            "cursor:pointer;font-size:14px;color:#1a2b5e;line-height:1.5;transition:background 0.15s;'"
+            " onmouseover=\"this.style.background='#e2eaff'\""
+            " onmouseout=\"this.style.background='#f0f4ff'\">"
+            "<span style='position:absolute;top:50%;right:14px;transform:translateY(-50%);font-size:16px;'>📋</span>"
+            f"{safe_q}"
+            "</div>"
+        )
+
+    clinical_lines = [l.strip().lstrip("- ") for l in clinical.split("\n") if l.strip()]
+    clinical_html = "".join(
+        f"<div style='font-size:13px;color:#3a3a5c;padding:5px 0;border-bottom:1px solid #e8eeff;'>"
+        f"<span style='color:#6a7abf;margin-right:6px;'>›</span>{_html.escape(l)}</div>"
+        for l in clinical_lines
+    )
+
+    worth_safe = _html.escape(worth_noting.replace("**", ""))
+    good_safe  = _html.escape(looks_good.replace("**", ""))
+    scan_safe  = _html.escape(scan_type) if scan_type else "Medical scan analysis ready."
+
+    html_out = (
+        "<style>"
+        "@keyframes scanFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}"
+        "@keyframes scanPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.7}}"
+        ".scs{animation:scanFadeUp 0.5s ease both}"
+        "</style>"
+        "<div style='font-family:Nunito,sans-serif;max-width:720px;'>"
+        "<div class='scs' style='animation-delay:0s;background:linear-gradient(135deg,#071a4a,#1a3d8f);"
+        "border-radius:24px;padding:28px 28px 22px;margin-bottom:16px;color:white;'>"
+        "<div style='display:flex;align-items:center;gap:14px;margin-bottom:12px;'>"
+        "<span style='font-size:42px;animation:scanPulse 2s infinite;'>🩻</span>"
+        "<div><div style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7a9cd8;margin-bottom:4px;'>Scan Analysis</div>"
+        "<div style='font-family:Playfair Display,serif;font-size:22px;font-weight:700;'>Scan Interpreter</div></div>"
+        "</div>"
+        "<div style='background:rgba(255,255,255,0.1);border-radius:12px;padding:12px 16px;"
+        f"font-size:15px;line-height:1.6;color:#dce8ff;'>{scan_safe}</div>"
+        "</div>"
+        "<div class='scs' style='animation-delay:0.1s;background:white;border:1.5px solid #e0e8f8;"
+        "border-radius:20px;padding:22px 24px;margin-bottom:14px;'>"
+        "<div style='display:flex;align-items:center;gap:10px;margin-bottom:14px;'>"
+        "<div style='width:36px;height:36px;background:#eef3ff;border-radius:10px;"
+        "display:flex;align-items:center;justify-content:center;font-size:18px;'>🔬</div>"
+        "<div style='font-size:16px;font-weight:800;color:#0d2b6e;'>What's in the picture</div>"
+        "</div>"
+        + bullets_html(in_picture) +
+        "</div>"
+        "<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;'>"
+        "<div class='scs' style='animation-delay:0.2s;background:#f0fdf5;border:1.5px solid #bbf0d4;"
+        "border-radius:20px;padding:20px 22px;'>"
+        "<div style='display:flex;align-items:center;gap:8px;margin-bottom:10px;'>"
+        "<span style='font-size:20px;'>✅</span>"
+        "<div style='font-size:14px;font-weight:800;color:#14532d;'>What looks good</div>"
+        "</div>"
+        f"<div style='font-size:13px;color:#166534;line-height:1.65;'>{good_safe}</div>"
+        "</div>"
+        "<div class='scs' style='animation-delay:0.25s;background:#fffbeb;border:1.5px solid #fde68a;"
+        "border-radius:20px;padding:20px 22px;'>"
+        "<div style='display:flex;align-items:center;gap:8px;margin-bottom:10px;'>"
+        "<span style='font-size:20px;'>🔶</span>"
+        "<div style='font-size:14px;font-weight:800;color:#78350f;'>Worth noting</div>"
+        "</div>"
+        f"<div style='font-size:13px;color:#92400e;line-height:1.65;'>{worth_safe}</div>"
+        "</div>"
+        "</div>"
+        "<div class='scs' style='animation-delay:0.35s;background:white;border:1.5px solid #e0e8f8;"
+        "border-radius:20px;padding:22px 24px;margin-bottom:14px;'>"
+        "<div style='display:flex;align-items:center;gap:10px;margin-bottom:16px;'>"
+        "<div style='width:36px;height:36px;background:#fff0f6;border-radius:10px;"
+        "display:flex;align-items:center;justify-content:center;font-size:18px;'>💬</div>"
+        "<div><div style='font-size:16px;font-weight:800;color:#0d2b6e;'>Questions to ask your doctor</div>"
+        "<div style='font-size:12px;color:#8aaee0;margin-top:1px;'>Tap any card to copy to clipboard</div></div>"
+        "</div>"
+        + (q_cards if q_cards else "<p style='color:#8aaee0;font-size:13px;'>No questions extracted.</p>") +
+        "</div>"
+        "<div class='scs' style='animation-delay:0.45s;background:#f8f9ff;border:1.5px solid #dce8ff;"
+        "border-radius:20px;padding:20px 24px;margin-bottom:16px;'>"
+        "<div onclick=\"var b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';"
+        "this.querySelector('.chev').textContent=b.style.display==='none'?'▼':'▲';\""
+        " style='display:flex;align-items:center;justify-content:space-between;cursor:pointer;'>"
+        "<div style='display:flex;align-items:center;gap:10px;'>"
+        "<span style='font-size:18px;'>👨‍⚕️</span>"
+        "<div style='font-size:14px;font-weight:800;color:#2451b3;'>Clinical summary</div>"
+        "<span style='font-size:11px;background:#e8eeff;color:#2451b3;padding:2px 8px;border-radius:20px;'>For your doctor</span>"
+        "</div>"
+        "<span class='chev' style='color:#8aaee0;font-size:13px;'>▼</span>"
+        "</div>"
+        "<div style='display:none;margin-top:14px;border-top:1px solid #dce8ff;padding-top:14px;'>"
+        + (clinical_html if clinical_html else "<p style='color:#8aaee0;font-size:13px;'>No clinical data.</p>") +
+        "</div></div>"
+        "<div class='scs' style='animation-delay:0.5s;text-align:center;"
+        "font-size:12px;color:#8aaee0;padding:4px 0 8px;'>"
+        "⚠️ AI-assisted interpretation only — always consult a qualified radiologist or physician"
+        "</div>"
+        "</div>"
+    )
+
+    st.markdown(html_out, unsafe_allow_html=True)
 
 st.set_page_config(
     page_title="MediChat — Your Medical Assistant",
@@ -1298,6 +1447,8 @@ with main_col:
 
                     if agent_name == "📅 Appointment Reminder":
                         _render_appointment(st.session_state.agent_result)
+                    elif agent_name == "🩻 Scan Interpreter":
+                        _render_scan_result(st.session_state.agent_result)
                     else:
                         st.markdown(st.session_state.agent_result)
 
