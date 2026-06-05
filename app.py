@@ -530,8 +530,12 @@ header { visibility: hidden; }
     padding: 8px !important;
 }
 [data-testid="stFileUploader"] * {
-    color: #c8daff !important;
-    -webkit-text-fill-color: #c8daff !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+[data-testid="stFileUploader"] section > div {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 [data-testid="stFileUploader"] button {
     background: rgba(74,144,217,0.25) !important;
@@ -547,6 +551,7 @@ header { visibility: hidden; }
     margin: 0 !important;
 }
 [data-testid="stFileUploader"] small { display: none !important; }
+[data-testid="stFileUploader"] span { display: none !important; }
 [data-testid="stSidebar"] .stMarkdown p,
 [data-testid="stSidebar"] .stMarkdown li { color: #9ab4e0 !important; font-size: 13px; line-height: 1.7; }
 
