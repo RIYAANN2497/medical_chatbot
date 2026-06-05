@@ -529,13 +529,14 @@ header { visibility: hidden; }
     border-radius: 16px !important;
     padding: 8px !important;
 }
-[data-testid="stFileUploader"] * {
+[data-testid="stFileUploader"] button {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
 }
-[data-testid="stFileUploader"] small { display: none !important; }
-[data-testid="stFileUploader"] span.st-emotion-cache-9ycgxx,
-[data-testid="stFileUploader"] span.css-9ycgxx {
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] small,
+[data-testid="stFileUploaderDropzoneInstructions"] span,
+[data-testid="stFileUploaderDropzoneInstructions"] div {
     display: none !important;
 }
 [data-testid="stFileUploader"] p {
@@ -544,20 +545,21 @@ header { visibility: hidden; }
     font-size: 13px !important;
     font-weight: 700 !important;
 }
-[data-testid="stFileUploader"] svg {
-    display: block !important;
-    fill: #ffffff !important;
-}
 [data-testid="stUploadedFile"] {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    font-weight: 700 !important;
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 4px 8px !important;
 }
 [data-testid="stUploadedFileName"] {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
     font-weight: 700 !important;
     font-size: 13px !important;
+}
+[data-testid="stUploadedFile"] span,
+[data-testid="stUploadedFile"] div {
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
 }
 
 [data-testid="stFileUploader"] button {
