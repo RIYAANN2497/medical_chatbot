@@ -135,6 +135,7 @@ def _render_scan_result(raw: str):
     import re as re3
     import html as _html
 
+    # ── parse sections ────────────────────────────────────────
     parts = re3.split(r'\n##\s+', raw.strip())
     sections = {}
     for part in parts:
@@ -160,13 +161,174 @@ def _render_scan_result(raw: str):
     ask_doctor   = get(["ask your doctor", "ask"])
     clinical     = get(["clinical summary", "clinical"])
 
+    # ── detect body region for diagram ───────────────────────
+    scan_lower = (scan_type + " " + in_picture + " " + worth_noting).lower()
+    if any(w in scan_lower for w in ["chest", "lung", "heart", "thorax", "rib", "clavicle", "pulmon"]):
+        body_region = "chest"
+    elif any(w in scan_lower for w in ["brain", "head", "skull", "cranial", "cerebr", "neuro"]):
+        body_region = "head"
+    elif any(w in scan_lower for w in ["knee", "femur", "tibia", "patella", "meniscus"]):
+        body_region = "knee"
+    elif any(w in scan_lower for w in ["spine", "vertebra", "lumbar", "cervical", "thoracic", "disc", "sacr"]):
+        body_region = "spine"
+    elif any(w in scan_lower for w in ["abdomen", "liver", "kidney", "gallbladder", "pancreas", "bowel", "colon"]):
+        body_region = "abdomen"
+    elif any(w in scan_lower for w in ["shoulder", "humerus", "rotator", "scapula"]):
+        body_region = "shoulder"
+    else:
+        body_region = "chest"
+
+    # ── detect problem area from worth_noting ─────────────────
+    worth_lower = worth_noting.lower()
+    has_issue = not any(p in worth_lower for p in ["nothing alarming", "no alarming", "looks normal", "no issues", "appears normal"])
+
+    # ── build problem spots per region ───────────────────────
+    problem_spots = []
+    if body_region == "chest":
+        if any(w in worth_lower for w in ["left lung", "left", "opaque", "opacity", "smaller"]):
+            problem_spots.append({"x": 38, "y": 38, "label": "Left lung"})
+        if any(w in worth_lower for w in ["right lung", "consolidat", "infiltrat", "haziness", "hazy"]):
+            problem_spots.append({"x": 62, "y": 38, "label": "Right lung"})
+        if any(w in worth_lower for w in ["heart", "cardiac", "cardiomegaly"]):
+            problem_spots.append({"x": 50, "y": 44, "label": "Heart"})
+    elif body_region == "head":
+        if any(w in worth_lower for w in ["left", "temporal", "frontal"]):
+            problem_spots.append({"x": 38, "y": 42, "label": "Left side"})
+        if any(w in worth_lower for w in ["right"]):
+            problem_spots.append({"x": 62, "y": 42, "label": "Right side"})
+        if any(w in worth_lower for w in ["mass", "lesion", "tumor", "bleed", "hemorrhage"]):
+            problem_spots.append({"x": 50, "y": 38, "label": "Area of concern"})
+    elif body_region == "spine":
+        if any(w in worth_lower for w in ["lumbar", "lower"]):
+            problem_spots.append({"x": 50, "y": 72, "label": "Lower spine"})
+        if any(w in worth_lower for w in ["cervical", "neck", "upper"]):
+            problem_spots.append({"x": 50, "y": 22, "label": "Upper spine"})
+        if any(w in worth_lower for w in ["disc", "bulge", "herniat"]):
+            problem_spots.append({"x": 50, "y": 58, "label": "Disc area"})
+
+    if has_issue and not problem_spots:
+        # generic fallback spot
+        region_defaults = {
+            "chest": {"x": 50, "y": 40, "label": "Area of concern"},
+            "head": {"x": 50, "y": 40, "label": "Area of concern"},
+            "knee": {"x": 50, "y": 50, "label": "Joint area"},
+            "spine": {"x": 50, "y": 55, "label": "Spinal area"},
+            "abdomen": {"x": 50, "y": 55, "label": "Abdominal area"},
+            "shoulder": {"x": 55, "y": 35, "label": "Shoulder joint"},
+        }
+        problem_spots.append(region_defaults.get(body_region, {"x": 50, "y": 45, "label": "Area of concern"}))
+
+    # ── SVG body diagrams ─────────────────────────────────────
+    def make_svg(region, spots):
+        # Build animated pulse circles for each problem spot
+        pulses = ""
+        for s in spots:
+            px, py = s["x"], s["y"]
+            lbl = _html.escape(s["label"])
+            pulses += f"""
+  <circle cx="{px}" cy="{py}" r="4" fill="#ef4444" opacity="0.9">
+    <animate attributeName="r" values="4;9;4" dur="1.8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.9;0.1;0.9" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="{px}" cy="{py}" r="3.5" fill="#ef4444"/>
+  <text x="{px}" y="{py - 12}" text-anchor="middle" font-size="5.5" fill="#ef4444" font-weight="bold" font-family="Nunito,sans-serif">{lbl}</text>"""
+
+        if region == "chest":
+            return f"""<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+  <!-- body outline -->
+  <rect x="28" y="18" width="44" height="62" rx="8" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <!-- neck -->
+  <rect x="42" y="10" width="16" height="12" rx="4" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <!-- head -->
+  <ellipse cx="50" cy="7" rx="10" ry="8" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <!-- ribs left -->
+  <path d="M44 30 Q36 33 35 38" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <path d="M44 36 Q35 39 34 44" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <path d="M44 42 Q35 45 35 50" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <!-- ribs right -->
+  <path d="M56 30 Q64 33 65 38" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <path d="M56 36 Q65 39 66 44" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <path d="M56 42 Q65 45 65 50" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <!-- lungs -->
+  <ellipse cx="38" cy="38" rx="9" ry="13" fill="#bfdbfe" opacity="0.7" stroke="#60a5fa" stroke-width="0.8"/>
+  <ellipse cx="62" cy="38" rx="9" ry="13" fill="#bfdbfe" opacity="0.7" stroke="#60a5fa" stroke-width="0.8"/>
+  <!-- heart -->
+  <ellipse cx="50" cy="44" rx="5" ry="6" fill="#fca5a5" opacity="0.85" stroke="#f87171" stroke-width="0.8"/>
+  <!-- spine -->
+  <line x1="50" y1="22" x2="50" y2="78" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="2,2"/>
+  <!-- labels -->
+  <text x="38" y="55" text-anchor="middle" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">L Lung</text>
+  <text x="62" y="55" text-anchor="middle" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">R Lung</text>
+  <text x="50" y="53" text-anchor="middle" font-size="3.8" fill="#991b1b" font-family="Nunito,sans-serif">Heart</text>
+  {pulses}
+</svg>"""
+
+        elif region == "head":
+            return f"""<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+  <!-- skull -->
+  <ellipse cx="50" cy="42" rx="28" ry="32" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <!-- jaw -->
+  <path d="M30 58 Q50 78 70 58" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <!-- brain outline -->
+  <ellipse cx="50" cy="36" rx="20" ry="22" fill="#bfdbfe" opacity="0.5" stroke="#60a5fa" stroke-width="0.8"/>
+  <!-- left hemisphere -->
+  <path d="M50 18 Q32 22 30 40 Q31 55 50 58" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <!-- right hemisphere -->
+  <path d="M50 18 Q68 22 70 40 Q69 55 50 58" stroke="#7aaee0" stroke-width="0.8" fill="none"/>
+  <!-- midline -->
+  <line x1="50" y1="16" x2="50" y2="58" stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="2,2"/>
+  <!-- eyes -->
+  <ellipse cx="40" cy="66" rx="5" ry="3" fill="white" stroke="#4a90d9" stroke-width="0.8"/>
+  <ellipse cx="60" cy="66" rx="5" ry="3" fill="white" stroke="#4a90d9" stroke-width="0.8"/>
+  <!-- nose -->
+  <path d="M47 72 Q50 76 53 72" stroke="#4a90d9" stroke-width="0.8" fill="none"/>
+  <!-- labels -->
+  <text x="38" y="34" text-anchor="middle" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">L</text>
+  <text x="62" y="34" text-anchor="middle" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">R</text>
+  {pulses}
+</svg>"""
+
+        elif region == "spine":
+            return f"""<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+  <!-- vertebrae -->
+  {"".join(f'<rect x="42" y="{10 + i*9}" width="16" height="7" rx="2" fill="#dce8ff" stroke="#4a90d9" stroke-width="1"/>' for i in range(9))}
+  <!-- disc pads -->
+  {"".join(f'<rect x="43" y="{17 + i*9}" width="14" height="2" rx="1" fill="#bfdbfe" opacity="0.8"/>' for i in range(8))}
+  <!-- spinal canal -->
+  <line x1="50" y1="10" x2="50" y2="88" stroke="#94a3b8" stroke-width="1" stroke-dasharray="1.5,1.5"/>
+  <!-- labels -->
+  <text x="68" y="18" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">Cervical</text>
+  <text x="68" y="40" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">Thoracic</text>
+  <text x="68" y="65" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">Lumbar</text>
+  <text x="68" y="82" font-size="4.5" fill="#1e40af" font-family="Nunito,sans-serif">Sacrum</text>
+  {pulses}
+</svg>"""
+
+        else:
+            # generic torso fallback
+            return f"""<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+  <rect x="28" y="18" width="44" height="72" rx="8" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <rect x="42" y="10" width="16" height="12" rx="4" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <ellipse cx="50" cy="7" rx="10" ry="8" fill="#dce8ff" stroke="#4a90d9" stroke-width="1.2"/>
+  <ellipse cx="38" cy="38" rx="9" ry="13" fill="#bfdbfe" opacity="0.6" stroke="#60a5fa" stroke-width="0.8"/>
+  <ellipse cx="62" cy="38" rx="9" ry="13" fill="#bfdbfe" opacity="0.6" stroke="#60a5fa" stroke-width="0.8"/>
+  <ellipse cx="50" cy="60" rx="12" ry="15" fill="#c7d2fe" opacity="0.5" stroke="#818cf8" stroke-width="0.8"/>
+  {pulses}
+</svg>"""
+
+    svg_diagram = make_svg(body_region, problem_spots)
+    has_diagram = bool(problem_spots)
+
+    # ── build bullet html (strips ** from labels) ─────────────
     def bullets_html(text):
         items = [l.lstrip("-* ").strip() for l in text.split("\n") if l.strip().startswith(("-", "*", "•"))]
         if not items:
             items = [s.strip() for s in text.split("\n") if s.strip()]
         out = ""
         for item in items:
-            bold_part = re3.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', _html.escape(item))
+            # strip stray ** that appear before the em-dash
+            item_clean = re3.sub(r'\*\*', '', item)
+            bold_part = re3.sub(r'__(.+?)__', r'<strong>\1</strong>', _html.escape(item_clean))
             out += (
                 "<div style='display:flex;gap:12px;align-items:flex-start;padding:10px 0;"
                 "border-bottom:1px solid #eef2ff;'>"
@@ -176,51 +338,91 @@ def _render_scan_result(raw: str):
             )
         return out
 
+    # ── question cards ────────────────────────────────────────
     q_items = [l.lstrip("-* 0123456789.").strip() for l in ask_doctor.split("\n") if l.strip() and len(l.strip()) > 8]
-
     q_cards = ""
     for q in q_items[:4]:
-        safe_q = _html.escape(q)
+        safe_q = _html.escape(re3.sub(r'\*\*', '', q))
         q_cards += (
-            "<div style='position:relative;background:#f0f4ff;border:1.5px solid #c5d4f5;"
-            "border-radius:14px;padding:14px 42px 14px 16px;margin-bottom:10px;"
-            "cursor:pointer;font-size:14px;color:#1a2b5e;line-height:1.5;transition:background 0.15s;'"
-            " onmouseover=\"this.style.background='#e2eaff'\""
-            " onmouseout=\"this.style.background='#f0f4ff'\">"
-            "<span style='position:absolute;top:50%;right:14px;transform:translateY(-50%);font-size:16px;'>📋</span>"
-            f"{safe_q}"
-            "</div>"
+            f"<div style='background:#f0f4ff;border:1.5px solid #c5d4f5;border-radius:14px;"
+            f"padding:14px 16px;margin-bottom:10px;font-size:14px;color:#1a2b5e;line-height:1.5;'>"
+            f"<span style='margin-right:8px;'>📋</span>{safe_q}"
+            f"</div>"
         )
 
-    clinical_lines = [l.strip().lstrip("- ") for l in clinical.split("\n") if l.strip()]
-    clinical_html = "".join(
+    # ── clinical lines ────────────────────────────────────────
+    clinical_lines = [re3.sub(r'\*\*', '', l.strip().lstrip("- ")) for l in clinical.split("\n") if l.strip()]
+    clinical_inner = "".join(
         f"<div style='font-size:13px;color:#3a3a5c;padding:5px 0;border-bottom:1px solid #e8eeff;'>"
         f"<span style='color:#6a7abf;margin-right:6px;'>›</span>{_html.escape(l)}</div>"
         for l in clinical_lines
     )
 
-    worth_safe = _html.escape(worth_noting.replace("**", ""))
-    good_safe  = _html.escape(looks_good.replace("**", ""))
-    scan_safe  = _html.escape(scan_type) if scan_type else "Medical scan analysis ready."
+    worth_safe = _html.escape(re3.sub(r'\*\*', '', worth_noting))
+    good_safe  = _html.escape(re3.sub(r'\*\*', '', looks_good))
+    scan_safe  = _html.escape(re3.sub(r'\*\*', '', scan_type)) if scan_type else "Medical scan analysis ready."
 
+    # ── body diagram panel ────────────────────────────────────
+    diagram_label = {"chest": "Chest", "head": "Head / Brain", "knee": "Knee", "spine": "Spine", "abdomen": "Abdomen", "shoulder": "Shoulder"}.get(body_region, "Body")
+    issue_count = len(problem_spots)
+    issue_badge = (
+        f"<span style='background:#fef2f2;color:#dc2626;font-size:11px;font-weight:700;"
+        f"padding:3px 10px;border-radius:20px;margin-left:8px;'>{issue_count} area{'s' if issue_count > 1 else ''} flagged</span>"
+        if has_diagram and has_issue else
+        "<span style='background:#f0fdf4;color:#16a34a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:8px;'>No concerns detected</span>"
+    )
+
+    diagram_panel = (
+        "<div style='animation:scanFadeUp 0.5s 0.08s ease both;background:white;"
+        "border:1.5px solid #e0e8f8;border-radius:20px;padding:22px 24px;margin-bottom:14px;'>"
+        "<div style='display:flex;align-items:center;gap:8px;margin-bottom:16px;'>"
+        "<div style='width:36px;height:36px;background:#eef3ff;border-radius:10px;"
+        "display:flex;align-items:center;justify-content:center;font-size:18px;'>🫁</div>"
+        f"<div style='font-size:16px;font-weight:800;color:#0d2b6e;'>{diagram_label} — Where to look</div>"
+        f"{issue_badge}"
+        "</div>"
+        "<div style='display:grid;grid-template-columns:160px 1fr;gap:20px;align-items:start;'>"
+        f"<div style='height:180px;'>{svg_diagram}</div>"
+        "<div>"
+        + (
+            "".join(
+                f"<div style='display:flex;align-items:center;gap:10px;padding:10px 14px;"
+                f"background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;margin-bottom:8px;'>"
+                f"<span style='font-size:18px;animation:scanPulse 1.8s infinite;'>🔴</span>"
+                f"<div><div style='font-size:13px;font-weight:700;color:#991b1b;'>{_html.escape(s['label'])}</div>"
+                f"<div style='font-size:12px;color:#7f1d1d;'>Marked on diagram</div></div></div>"
+                for s in problem_spots
+            )
+            if problem_spots and has_issue else
+            "<div style='font-size:13px;color:#16a34a;padding:10px 0;'>Everything appears within normal range on this scan.</div>"
+        )
+        + "</div></div></div>"
+    )
+
+    # ── final html assembly ───────────────────────────────────
     html_out = (
         "<style>"
         "@keyframes scanFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}"
-        "@keyframes scanPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.7}}"
-        ".scs{animation:scanFadeUp 0.5s ease both}"
+        "@keyframes scanPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:0.6}}"
         "</style>"
         "<div style='font-family:Nunito,sans-serif;max-width:720px;'>"
-        "<div class='scs' style='animation-delay:0s;background:linear-gradient(135deg,#071a4a,#1a3d8f);"
-        "border-radius:24px;padding:28px 28px 22px;margin-bottom:16px;color:white;'>"
-        "<div style='display:flex;align-items:center;gap:14px;margin-bottom:12px;'>"
-        "<span style='font-size:42px;animation:scanPulse 2s infinite;'>🩻</span>"
-        "<div><div style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7a9cd8;margin-bottom:4px;'>Scan Analysis</div>"
-        "<div style='font-family:Playfair Display,serif;font-size:22px;font-weight:700;'>Scan Interpreter</div></div>"
+
+        # dark header (no duplicate title, just scan type sentence)
+        "<div style='animation:scanFadeUp 0.5s ease both;background:linear-gradient(135deg,#071a4a,#1a3d8f);"
+        "border-radius:24px;padding:24px 28px;margin-bottom:16px;color:white;'>"
+        "<div style='display:flex;align-items:center;gap:12px;margin-bottom:10px;'>"
+        "<span style='font-size:36px;animation:scanPulse 2s infinite;'>🩻</span>"
+        "<div style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7a9cd8;'>Scan Analysis</div>"
         "</div>"
-        "<div style='background:rgba(255,255,255,0.1);border-radius:12px;padding:12px 16px;"
+        "<div style='background:rgba(255,255,255,0.1);border-radius:12px;padding:10px 16px;"
         f"font-size:15px;line-height:1.6;color:#dce8ff;'>{scan_safe}</div>"
         "</div>"
-        "<div class='scs' style='animation-delay:0.1s;background:white;border:1.5px solid #e0e8f8;"
+
+        # animated body diagram
+        + diagram_panel +
+
+        # what's in the picture
+        "<div style='animation:scanFadeUp 0.5s 0.15s ease both;background:white;border:1.5px solid #e0e8f8;"
         "border-radius:20px;padding:22px 24px;margin-bottom:14px;'>"
         "<div style='display:flex;align-items:center;gap:10px;margin-bottom:14px;'>"
         "<div style='width:36px;height:36px;background:#eef3ff;border-radius:10px;"
@@ -229,8 +431,10 @@ def _render_scan_result(raw: str):
         "</div>"
         + bullets_html(in_picture) +
         "</div>"
+
+        # good + noting
         "<div style='display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;'>"
-        "<div class='scs' style='animation-delay:0.2s;background:#f0fdf5;border:1.5px solid #bbf0d4;"
+        "<div style='animation:scanFadeUp 0.5s 0.2s ease both;background:#f0fdf5;border:1.5px solid #bbf0d4;"
         "border-radius:20px;padding:20px 22px;'>"
         "<div style='display:flex;align-items:center;gap:8px;margin-bottom:10px;'>"
         "<span style='font-size:20px;'>✅</span>"
@@ -238,7 +442,7 @@ def _render_scan_result(raw: str):
         "</div>"
         f"<div style='font-size:13px;color:#166534;line-height:1.65;'>{good_safe}</div>"
         "</div>"
-        "<div class='scs' style='animation-delay:0.25s;background:#fffbeb;border:1.5px solid #fde68a;"
+        "<div style='animation:scanFadeUp 0.5s 0.25s ease both;background:#fffbeb;border:1.5px solid #fde68a;"
         "border-radius:20px;padding:20px 22px;'>"
         "<div style='display:flex;align-items:center;gap:8px;margin-bottom:10px;'>"
         "<span style='font-size:20px;'>🔶</span>"
@@ -247,32 +451,40 @@ def _render_scan_result(raw: str):
         f"<div style='font-size:13px;color:#92400e;line-height:1.65;'>{worth_safe}</div>"
         "</div>"
         "</div>"
-        "<div class='scs' style='animation-delay:0.35s;background:white;border:1.5px solid #e0e8f8;"
+
+        # doctor questions
+        "<div style='animation:scanFadeUp 0.5s 0.3s ease both;background:white;border:1.5px solid #e0e8f8;"
         "border-radius:20px;padding:22px 24px;margin-bottom:14px;'>"
         "<div style='display:flex;align-items:center;gap:10px;margin-bottom:16px;'>"
         "<div style='width:36px;height:36px;background:#fff0f6;border-radius:10px;"
         "display:flex;align-items:center;justify-content:center;font-size:18px;'>💬</div>"
         "<div><div style='font-size:16px;font-weight:800;color:#0d2b6e;'>Questions to ask your doctor</div>"
-        "<div style='font-size:12px;color:#8aaee0;margin-top:1px;'>Tap any card to copy to clipboard</div></div>"
+        "<div style='font-size:12px;color:#8aaee0;margin-top:1px;'>Bring these to your next appointment</div></div>"
         "</div>"
         + (q_cards if q_cards else "<p style='color:#8aaee0;font-size:13px;'>No questions extracted.</p>") +
         "</div>"
-        "<div class='scs' style='animation-delay:0.45s;background:#f8f9ff;border:1.5px solid #dce8ff;"
+
+        # clinical summary — uses a unique id so toggle JS is bulletproof
+        "<div style='animation:scanFadeUp 0.5s 0.35s ease both;background:#f8f9ff;border:1.5px solid #dce8ff;"
         "border-radius:20px;padding:20px 24px;margin-bottom:16px;'>"
-        "<div onclick=\"var b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';"
-        "this.querySelector('.chev').textContent=b.style.display==='none'?'▼':'▲';\""
-        " style='display:flex;align-items:center;justify-content:space-between;cursor:pointer;'>"
+        "<div id='clin-toggle' style='display:flex;align-items:center;justify-content:space-between;cursor:pointer;'"
+        " onclick=\"var b=document.getElementById('clin-body');var c=document.getElementById('clin-chev');"
+        "if(b.style.display==='none'){b.style.display='block';c.textContent='▲';}else{b.style.display='none';c.textContent='▼';}\""
+        ">"
         "<div style='display:flex;align-items:center;gap:10px;'>"
         "<span style='font-size:18px;'>👨‍⚕️</span>"
         "<div style='font-size:14px;font-weight:800;color:#2451b3;'>Clinical summary</div>"
         "<span style='font-size:11px;background:#e8eeff;color:#2451b3;padding:2px 8px;border-radius:20px;'>For your doctor</span>"
         "</div>"
-        "<span class='chev' style='color:#8aaee0;font-size:13px;'>▼</span>"
+        "<span id='clin-chev' style='color:#8aaee0;font-size:13px;'>▼</span>"
         "</div>"
-        "<div style='display:none;margin-top:14px;border-top:1px solid #dce8ff;padding-top:14px;'>"
-        + (clinical_html if clinical_html else "<p style='color:#8aaee0;font-size:13px;'>No clinical data.</p>") +
-        "</div></div>"
-        "<div class='scs' style='animation-delay:0.5s;text-align:center;"
+        "<div id='clin-body' style='display:none;margin-top:14px;border-top:1px solid #dce8ff;padding-top:14px;'>"
+        + (clinical_inner if clinical_inner else "<p style='color:#8aaee0;font-size:13px;'>No clinical data available.</p>") +
+        "</div>"
+        "</div>"
+
+        # disclaimer
+        "<div style='animation:scanFadeUp 0.5s 0.4s ease both;text-align:center;"
         "font-size:12px;color:#8aaee0;padding:4px 0 8px;'>"
         "⚠️ AI-assisted interpretation only — always consult a qualified radiologist or physician"
         "</div>"
@@ -1437,13 +1649,14 @@ with main_col:
                             st.rerun()
 
                 else:
-                    st.markdown(
-                        f"<div class='agent-result-panel'>"
-                        f"<div class='agent-result-header'>{agent_name}</div>"
-                        f"<div class='agent-result-sub'>{descriptions.get(agent_name, '')}</div>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
+                    if agent_name not in ("📅 Appointment Reminder", "🩻 Scan Interpreter"):
+                        st.markdown(
+                            f"<div class='agent-result-panel'>"
+                            f"<div class='agent-result-header'>{agent_name}</div>"
+                            f"<div class='agent-result-sub'>{descriptions.get(agent_name, '')}</div>"
+                            f"</div>",
+                            unsafe_allow_html=True,
+                        )
 
                     if agent_name == "📅 Appointment Reminder":
                         _render_appointment(st.session_state.agent_result)
