@@ -523,9 +523,7 @@ header { visibility: hidden; }
 }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 [data-testid="stSidebar"] * { color: #dce8ff !important; }
-[data-testid="stSidebar"] [data-testid="stUploadedFileData"] * { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
-[data-testid="stSidebar"] [data-testid="stUploadedFileData"] { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
-[data-testid="stSidebar"] [data-testid="stUploadedFile"] * { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
+[data-testid="stSidebar"] [data-testid="stFileUploader"] * { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
 [data-testid="stFileUploader"] {
     background: rgba(255,255,255,0.08) !important;
     border: 2px dashed rgba(74,144,217,0.6) !important;
