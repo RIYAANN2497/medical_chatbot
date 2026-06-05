@@ -585,6 +585,7 @@ header { visibility: hidden; }
 
 [data-testid="stFileUploader"]:hover { border-color: rgba(74,144,217,0.9) !important; }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 90px !important; border: none !important; background: transparent !important; flex-direction: column !important; gap: 0 !important; }
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > *:not(button) { display: none !important; }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button {
     width: 48px !important;
     height: 48px !important;
@@ -1291,15 +1292,28 @@ with st.sidebar:
         padding: 0 !important;
         font-size: 0 !important;
         color: transparent !important;
+        position: relative !important;
     }
-    [data-testid="stFileUploaderDropzone"] button svg * {
-        stroke: #ffffff !important;
-        fill: none !important;
+    [data-testid="stFileUploaderDropzone"] button svg {
+        display: none !important;
     }
     [data-testid="stFileUploaderDropzone"] button span {
         display: none !important;
         font-size: 0 !important;
         opacity: 0 !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button::after {
+        content: '' !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 22px !important;
+        height: 22px !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        display: block !important;
     }
     </style>
     """, unsafe_allow_html=True)
