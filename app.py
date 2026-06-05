@@ -584,7 +584,8 @@ header { visibility: hidden; }
 }
 
 [data-testid="stFileUploader"]:hover { border-color: rgba(74,144,217,0.9) !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 90px !important; border: none !important; background: transparent !important; flex-direction: column !important; gap: 8px !important; }
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 90px !important; border: none !important; background: transparent !important; flex-direction: column !important; gap: 0 !important; }
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > *:not(button) { display: none !important; }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button {
     width: 48px !important;
     height: 48px !important;
@@ -1273,21 +1274,36 @@ with st.sidebar:
         accept_multiple_files=True,
         label_visibility="collapsed",
     )
-
-    import streamlit.components.v1 as components
-    components.html("""
-    <script>
-    function fixUploader() {
-        const instructions = document.querySelectorAll('[data-testid="stFileUploaderDropzoneInstructions"]');
-        instructions.forEach(el => { el.style.cssText = 'display:none!important'; });
-        const svgs = document.querySelectorAll('[data-testid="stFileUploaderDropzone"] button svg');
-        svgs.forEach(svg => { svg.style.cssText = 'stroke:#ffffff!important;fill:none!important;width:20px!important;height:20px!important;'; });
+    st.markdown("""
+    <style>
+    [data-testid="stFileUploaderDropzoneInstructions"] * {
+        font-size: 0 !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        line-height: 0 !important;
+        opacity: 0 !important;
     }
-    fixUploader();
-    setTimeout(fixUploader, 500);
-    setTimeout(fixUploader, 1500);
-    </script>
-    """, height=0)
+    [data-testid="stFileUploaderDropzone"] button {
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 50% !important;
+        background: rgba(74,144,217,0.15) !important;
+        border: 1.5px solid rgba(74,144,217,0.4) !important;
+        padding: 0 !important;
+        font-size: 0 !important;
+        color: transparent !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button svg * {
+        stroke: #ffffff !important;
+        fill: none !important;
+    }
+    [data-testid="stFileUploaderDropzone"] button span {
+        display: none !important;
+        font-size: 0 !important;
+        opacity: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
     if uploaded_files:
         for f in uploaded_files:
