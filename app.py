@@ -1307,7 +1307,8 @@ with st.sidebar:
         cursor: pointer;
         position: relative;
         z-index: 1;
-        margin-top: -120px;
+        margin-top: -105px;
+        margin-bottom: 12px;
     ">
         <div style="
             width: 52px;
