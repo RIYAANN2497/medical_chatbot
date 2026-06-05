@@ -1980,35 +1980,19 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            user_input = st.chat_input("Ask about your medical documents…")
+            # Replace everything from "with st.expander("🎤 Voice input"..." 
+            # down through "if user_input:" with this:
 
-            col_mic, col_lang, col_spacer = st.columns([2, 2, 7])
+            col_input, col_mic = st.columns([12, 1])
 
             with col_mic:
-                audio = st.audio_input(
-                    "🎤 Voice input",
-                    key=f"audio_input_{st.session_state.get('audio_key', 0)}",
-                )
+                st.markdown("<div style='padding-top:6px'>", unsafe_allow_html=True)
+                audio = st.audio_input("🎤", label_visibility="collapsed",
+                                    key=f"audio_input_{st.session_state.get('audio_key', 0)}")
+                st.markdown("</div>", unsafe_allow_html=True)
 
-            with col_lang:
-                lang_options = ["English", "Hindi", "Malayalam"]
-                current_lang = st.session_state.get("user_language", "English")
-                selected_lang = st.selectbox(
-                    "Language",
-                    options=lang_options,
-                    index=lang_options.index(current_lang),
-                    key="inline_lang_selector",
-                )
-                if selected_lang != st.session_state.get("user_language", "English"):
-                    st.session_state.user_language = selected_lang
-                    from langchain_groq import ChatGroq
-                    from langchain_core.output_parsers import StrOutputParser
-                    _llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
-                    ack = (_llm | StrOutputParser()).invoke(
-                        f"In {selected_lang} only, write one short warm sentence (max 12 words) saying you'll now respond in {selected_lang}. Keep emojis."
-                    )
-                    st.session_state.chat_history.append({"role": "assistant", "content": ack})
-                    st.rerun()
+            with col_input:
+                user_input = st.chat_input("Ask about your medical documents…")
 
             if audio:
                 audio_bytes = audio.read()
