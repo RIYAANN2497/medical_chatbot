@@ -1274,6 +1274,21 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
+    import streamlit.components.v1 as components
+    components.html("""
+    <script>
+    function fixUploader() {
+        const instructions = document.querySelectorAll('[data-testid="stFileUploaderDropzoneInstructions"]');
+        instructions.forEach(el => { el.style.cssText = 'display:none!important'; });
+        const svgs = document.querySelectorAll('[data-testid="stFileUploaderDropzone"] button svg');
+        svgs.forEach(svg => { svg.style.cssText = 'stroke:#ffffff!important;fill:none!important;width:20px!important;height:20px!important;'; });
+    }
+    fixUploader();
+    setTimeout(fixUploader, 500);
+    setTimeout(fixUploader, 1500);
+    </script>
+    """, height=0)
+
     if uploaded_files:
         for f in uploaded_files:
             already_done = f.name in st.session_state.uploaded_names
