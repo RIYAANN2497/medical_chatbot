@@ -533,10 +533,33 @@ header { visibility: hidden; }
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
 }
-[data-testid="stFileUploader"] section > div {
+[data-testid="stFileUploader"] small { display: none !important; }
+[data-testid="stFileUploader"] span.st-emotion-cache-9ycgxx,
+[data-testid="stFileUploader"] span.css-9ycgxx {
+    display: none !important;
+}
+[data-testid="stFileUploader"] p {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
 }
+[data-testid="stFileUploader"] svg {
+    display: block !important;
+    fill: #ffffff !important;
+}
+[data-testid="stUploadedFile"] {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 700 !important;
+}
+[data-testid="stUploadedFileName"] {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
 [data-testid="stFileUploader"] button {
     background: rgba(74,144,217,0.25) !important;
     border: 1px solid rgba(74,144,217,0.5) !important;
@@ -550,8 +573,6 @@ header { visibility: hidden; }
     height: auto !important;
     margin: 0 !important;
 }
-[data-testid="stFileUploader"] small { display: none !important; }
-[data-testid="stFileUploader"] span { display: none !important; }
 [data-testid="stSidebar"] .stMarkdown p,
 [data-testid="stSidebar"] .stMarkdown li { color: #9ab4e0 !important; font-size: 13px; line-height: 1.7; }
 
