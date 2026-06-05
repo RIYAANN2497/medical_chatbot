@@ -523,16 +523,16 @@ header { visibility: hidden; }
 }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 [data-testid="stSidebar"] * { color: #dce8ff !important; }
+[data-testid="stSidebar"] [data-testid="stUploadedFileData"] * { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
+[data-testid="stSidebar"] [data-testid="stUploadedFileData"] { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
+[data-testid="stSidebar"] [data-testid="stUploadedFile"] * { color: #0d2b6e !important; -webkit-text-fill-color: #0d2b6e !important; }
 [data-testid="stFileUploader"] {
     background: rgba(255,255,255,0.08) !important;
     border: 2px dashed rgba(74,144,217,0.6) !important;
     border-radius: 16px !important;
     padding: 8px !important;
 }
-[data-testid="stFileUploader"] button {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-}
+
 [data-testid="stFileUploader"] small,
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] small,
 [data-testid="stFileUploaderDropzoneInstructions"] span,
@@ -557,7 +557,13 @@ header { visibility: hidden; }
     font-size: 13px !important;
 }
 [data-testid="stUploadedFile"] span,
-[data-testid="stUploadedFile"] div {
+[data-testid="stUploadedFile"] div,
+[data-testid="stUploadedFile"] p,
+[data-testid="stUploadedFile"] * {
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
+}
+[data-testid="stSidebar"] [data-testid="stUploadedFile"] * {
     color: #0d2b6e !important;
     -webkit-text-fill-color: #0d2b6e !important;
 }
@@ -566,8 +572,8 @@ header { visibility: hidden; }
     background: rgba(74,144,217,0.25) !important;
     border: 1px solid rgba(74,144,217,0.5) !important;
     border-radius: 8px !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: #0d2b6e !important;
+    -webkit-text-fill-color: #0d2b6e !important;
     font-weight: 700 !important;
     font-size: 12px !important;
     padding: 4px 12px !important;
