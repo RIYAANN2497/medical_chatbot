@@ -1283,24 +1283,36 @@ with st.sidebar:
         line-height: 0 !important;
         opacity: 0 !important;
     }
+    [data-testid="stFileUploaderDropzone"] {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 100px !important;
+    }
     [data-testid="stFileUploaderDropzone"] button {
-        width: 48px !important;
-        height: 48px !important;
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+        min-height: 52px !important;
         border-radius: 50% !important;
-        background: rgba(74,144,217,0.15) !important;
-        border: 1.5px solid rgba(74,144,217,0.4) !important;
+        background: rgba(74,144,217,0.20) !important;
+        border: 2px solid rgba(74,144,217,0.6) !important;
         padding: 0 !important;
         font-size: 0 !important;
         color: transparent !important;
         position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     [data-testid="stFileUploaderDropzone"] button svg {
         display: none !important;
     }
     [data-testid="stFileUploaderDropzone"] button span {
         display: none !important;
-        font-size: 0 !important;
-        opacity: 0 !important;
     }
     [data-testid="stFileUploaderDropzone"] button::after {
         content: '' !important;
@@ -1308,12 +1320,13 @@ with st.sidebar:
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
-        width: 22px !important;
-        height: 22px !important;
+        width: 24px !important;
+        height: 24px !important;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E") !important;
         background-repeat: no-repeat !important;
         background-size: contain !important;
         display: block !important;
+        opacity: 1 !important;
     }
     </style>
     """, unsafe_allow_html=True)
