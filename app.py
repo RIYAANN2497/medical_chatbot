@@ -1275,14 +1275,12 @@ with st.sidebar:
     }
     [data-testid="stFileUploaderDropzone"] {
         opacity: 0 !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
+        position: relative !important;
         width: 100% !important;
         height: 110px !important;
         cursor: pointer !important;
         z-index: 10 !important;
-        margin-top: 0 !important;
+        margin-top: -118px !important;
     }
     </style>
 
