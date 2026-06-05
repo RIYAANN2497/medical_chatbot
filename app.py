@@ -1982,21 +1982,20 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            col_input, col_mic, col_lang = st.columns([11, 1, 1])
+            col_input, col_mic, col_lang = st.columns([7, 2, 2])
 
             with col_mic:
-                audio = st.audio_input("🎤", label_visibility="collapsed",
+                audio = st.audio_input("🎤", label_visibility="visible",
                                     key=f"audio_input_{st.session_state.get('audio_key', 0)}")
 
             with col_lang:
                 lang_options = ["English", "Hindi", "Malayalam"]
                 current_lang = st.session_state.get("user_language", "English")
-                lang_icons = {"English": "🌐", "Hindi": "🇮🇳", "Malayalam": "🌴"}
                 selected_lang = st.selectbox(
                     "Language",
                     options=lang_options,
                     index=lang_options.index(current_lang),
-                    format_func=lambda x: lang_icons[x],
+                    format_func=lambda x: x,
                     label_visibility="collapsed",
                     key="inline_lang_selector",
                 )
