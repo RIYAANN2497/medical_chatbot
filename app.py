@@ -1983,16 +1983,12 @@ with main_col:
             # Replace everything from "with st.expander("🎤 Voice input"..." 
             # down through "if user_input:" with this:
 
-            col_input, col_mic = st.columns([12, 1])
+            audio = st.audio_input(
+                "🎤 Tap to speak",
+                key=f"audio_input_{st.session_state.get('audio_key', 0)}",
+            )
 
-            with col_mic:
-                st.markdown("<div style='padding-top:6px'>", unsafe_allow_html=True)
-                audio = st.audio_input("🎤", label_visibility="collapsed",
-                                    key=f"audio_input_{st.session_state.get('audio_key', 0)}")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            with col_input:
-                user_input = st.chat_input("Ask about your medical documents…")
+            user_input = st.chat_input("Ask about your medical documents…")
 
             if audio:
                 audio_bytes = audio.read()
