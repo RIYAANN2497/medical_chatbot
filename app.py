@@ -531,12 +531,7 @@ header { visibility: hidden; }
     padding: 8px !important;
 }
 
-[data-testid="stFileUploader"] small,
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] small,
-[data-testid="stFileUploaderDropzoneInstructions"] span,
-[data-testid="stFileUploaderDropzoneInstructions"] div {
-    display: none !important;
-}
+
 [data-testid="stFileUploader"] p {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
@@ -590,12 +585,41 @@ header { visibility: hidden; }
 
 [data-testid="stFileUploader"]:hover { border-color: rgba(74,144,217,0.9) !important; }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 90px !important; border: none !important; background: transparent !important; flex-direction: column !important; gap: 8px !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button { width: 48px !important; height: 48px !important; border-radius: 50% !important; background: rgba(74,144,217,0.15) !important; border: 1.5px solid rgba(74,144,217,0.4) !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 !important; font-size: 0 !important; color: transparent !important; -webkit-text-fill-color: transparent !important; transition: all 0.2s ease !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button:hover { background: rgba(74,144,217,0.28) !important; border-color: rgba(74,144,217,0.7) !important; transform: scale(1.06) !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button svg { display: block !important; width: 20px !important; height: 20px !important; fill: none !important; stroke: #4a90d9 !important; stroke-width: 2 !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] { display: flex !important; flex-direction: column !important; align-items: center !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] > div > span { display: block !important; font-size: 11px !important; color: rgba(255,255,255,0.6) !important; -webkit-text-fill-color: rgba(255,255,255,0.6) !important; letter-spacing: 0.5px !important; text-transform: lowercase !important; margin-top: 2px !important; }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] small { display: none !important; }
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background: rgba(74,144,217,0.15) !important;
+    border: 1.5px solid rgba(74,144,217,0.4) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    transition: all 0.2s ease !important;
+}
+
+
+
+/* Make the arrow icon white */
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button svg {
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    fill: none !important;
+    stroke: #ffffff !important;
+    stroke-width: 2 !important;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button:hover {
+    background: rgba(74,144,217,0.28) !important;
+    border-color: rgba(74,144,217,0.7) !important;
+    transform: scale(1.06) !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] {
+    display: none !important;
+}
 
 [data-testid="stSidebar"] .stButton > button {
     width: 100%;
