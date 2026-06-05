@@ -619,6 +619,11 @@ header { visibility: hidden; }
 }
 [data-testid="stFileUploaderDropzoneInstructions"] {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
 }
 
 [data-testid="stSidebar"] .stButton > button {
