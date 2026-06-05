@@ -1268,14 +1268,6 @@ with st.sidebar:
         'color:#4a6aaa;margin:0 0 8px;display:block;">📂 Upload Documents</p>',
         unsafe_allow_html=True,
     )
-    uploaded_files = st.file_uploader(
-        "Drop your files here",
-        type=["pdf", "jpg", "jpeg", "png", "webp", "docx", "txt"],
-        accept_multiple_files=True,
-        label_visibility="collapsed",
-        key="file_uploader",
-    )
-
     st.markdown("""
     <style>
     [data-testid="stFileUploader"] {
@@ -1287,13 +1279,14 @@ with st.sidebar:
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        height: 100% !important;
+        height: 110px !important;
         cursor: pointer !important;
-        z-index: 2 !important;
+        z-index: 10 !important;
+        margin-top: 0 !important;
     }
     </style>
 
-    <div id="custom-upload-box" style="
+    <div style="
         width: 100%;
         min-height: 110px;
         border: 2px dashed rgba(74,144,217,0.6);
@@ -1305,10 +1298,7 @@ with st.sidebar:
         gap: 10px;
         background: rgba(255,255,255,0.04);
         cursor: pointer;
-        position: relative;
-        z-index: 1;
-        margin-top: -105px;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
     ">
         <div style="
             width: 52px;
@@ -1333,6 +1323,14 @@ with st.sidebar:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    uploaded_files = st.file_uploader(
+        "Drop your files here",
+        type=["pdf", "jpg", "jpeg", "png", "webp", "docx", "txt"],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
+        key="file_uploader",
+    )
 
     if uploaded_files:
         for f in uploaded_files:
