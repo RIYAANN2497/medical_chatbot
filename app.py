@@ -1833,33 +1833,34 @@ with main_col:
             """, unsafe_allow_html=True)
 
         else:
-            with st.expander("🎤 Voice input", expanded=False):
-                audio = st.audio_input(
-                    "Record your question",
-                    key=f"audio_input_{st.session_state.get('audio_key', 0)}"
-                )
-                if audio:
-                    audio_bytes = audio.read()
-                    audio_id = hash(audio_bytes)
+            col_input, col_mic = st.columns([12, 1])
 
-                    if audio_id != st.session_state.get("last_audio_id"):
-                        st.session_state["last_audio_id"] = audio_id
-                        with st.spinner("Transcribing…"):
-                            try:
-                                from groq import Groq
-                                groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-                                transcription = groq_client.audio.transcriptions.create(
-                                    file=("audio.wav", audio_bytes, "audio/wav"),
-                                    model="whisper-large-v3",
-                                    language="en",
-                                )
-                                st.session_state["prefill_input"] = transcription.text
-                                st.session_state["voice_processed"] = False
-                                st.session_state["audio_key"] = st.session_state.get("audio_key", 0) + 1
-                            except Exception as e:
-                                st.error(f"Transcription failed: {e}")
+            with col_mic:
+                audio = st.audio_input("🎤", label_visibility="collapsed",
+                                    key=f"audio_input_{st.session_state.get('audio_key', 0)}")
 
-            user_input = st.chat_input("Ask about your medical documents…")
+            with col_input:
+                user_input = st.chat_input("Ask about your medical documents…")
+
+            if audio:
+                audio_bytes = audio.read()
+                audio_id = hash(audio_bytes)
+                if audio_id != st.session_state.get("last_audio_id"):
+                    st.session_state["last_audio_id"] = audio_id
+                    with st.spinner("Transcribing…"):
+                        try:
+                            from groq import Groq
+                            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+                            transcription = groq_client.audio.transcriptions.create(
+                                file=("audio.wav", audio_bytes, "audio/wav"),
+                                model="whisper-large-v3",
+                                language="en",
+                            )
+                            st.session_state["prefill_input"] = transcription.text
+                            st.session_state["voice_processed"] = False
+                            st.session_state["audio_key"] = st.session_state.get("audio_key", 0) + 1
+                        except Exception as e:
+                            st.error(f"Transcription failed: {e}")
 
             if not user_input:
                 prefill = st.session_state.get("prefill_input", "")
