@@ -1273,62 +1273,64 @@ with st.sidebar:
         type=["pdf", "jpg", "jpeg", "png", "webp", "docx", "txt"],
         accept_multiple_files=True,
         label_visibility="collapsed",
+        key="file_uploader",
     )
+
     st.markdown("""
     <style>
-    [data-testid="stFileUploaderDropzoneInstructions"] * {
-        font-size: 0 !important;
-        color: transparent !important;
-        -webkit-text-fill-color: transparent !important;
-        line-height: 0 !important;
-        opacity: 0 !important;
+    [data-testid="stFileUploader"] {
+        position: relative !important;
     }
     [data-testid="stFileUploaderDropzone"] {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        min-height: 100px !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button {
-        width: 52px !important;
-        height: 52px !important;
-        min-width: 52px !important;
-        min-height: 52px !important;
-        border-radius: 50% !important;
-        background: rgba(74,144,217,0.20) !important;
-        border: 2px solid rgba(74,144,217,0.6) !important;
-        padding: 0 !important;
-        font-size: 0 !important;
-        color: transparent !important;
-        position: relative !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button svg {
-        display: none !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button span {
-        display: none !important;
-    }
-    [data-testid="stFileUploaderDropzone"] button::after {
-        content: '' !important;
+        opacity: 0 !important;
         position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        width: 24px !important;
-        height: 24px !important;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E") !important;
-        background-repeat: no-repeat !important;
-        background-size: contain !important;
-        display: block !important;
-        opacity: 1 !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        cursor: pointer !important;
+        z-index: 2 !important;
     }
     </style>
+
+    <div id="custom-upload-box" style="
+        width: 100%;
+        min-height: 110px;
+        border: 2px dashed rgba(74,144,217,0.6);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.04);
+        cursor: pointer;
+        position: relative;
+        z-index: 1;
+        margin-top: -120px;
+    ">
+        <div style="
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(74,144,217,0.20);
+            border: 2px solid rgba(74,144,217,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        ">
+            <svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' 
+                 fill='none' stroke='white' stroke-width='2.5' 
+                 stroke-linecap='round' stroke-linejoin='round'>
+                <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/>
+                <polyline points='17 8 12 3 7 8'/>
+                <line x1='12' y1='3' x2='12' y2='15'/>
+            </svg>
+        </div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.5);">
+            Click or drag files here
+        </div>
+    </div>
     """, unsafe_allow_html=True)
 
     if uploaded_files:
