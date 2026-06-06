@@ -1486,7 +1486,7 @@ with st.sidebar:
     else:
         for sess in past_sessions[:5]:
             sid = sess["session_id"]
-            if sid == st.session_state.session_id:
+            if sid == st.session_state.session_id and not st.session_state.get("loaded_history_session"):
                 continue
             updated = sess.get("updated_at", "")[:16].replace("T", " ")
             preview = sess.get("preview", "")[:55]
