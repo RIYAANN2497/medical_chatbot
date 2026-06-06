@@ -13,11 +13,20 @@ def _session_path(session_id: str) -> str:
     return os.path.join(HISTORY_DIR, f"{session_id}.json")
 
 
-def save_session(session_id: str, patient_name: str, user_name: str, messages: list, user_whom: str = "me"):
+def save_session(
+    session_id: str,
+    patient_name: str,
+    user_name: str,
+    messages: list,
+    user_whom: str = "me",
+    summaries: dict = None,
+    image_texts: dict = None,
+    uploaded_names: list = None,
+    chroma_dir: str = None,
+):
     _ensure_dir()
     now = datetime.utcnow().isoformat()
 
-    # Build a short preview from the last user message
     preview = ""
     for msg in reversed(messages):
         if msg.get("role") == "user":
@@ -32,10 +41,13 @@ def save_session(session_id: str, patient_name: str, user_name: str, messages: l
         "updated_at": now,
         "preview": preview,
         "messages": messages,
+        "summaries": summaries or {},
+        "image_texts": image_texts or {},
+        "uploaded_names": uploaded_names or [],
+        "chroma_dir": chroma_dir or "",
     }
 
     path = _session_path(session_id)
-    # Preserve created_at if file already exists
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as f:

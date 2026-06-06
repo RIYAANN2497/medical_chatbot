@@ -908,6 +908,10 @@ def _autosave_chat():
             user_name=st.session_state.user_name,
             messages=st.session_state.chat_history,
             user_whom=st.session_state.user_whom,
+            summaries=st.session_state.get("summaries", {}),
+            image_texts=st.session_state.get("image_texts", {}),
+            uploaded_names=st.session_state.get("uploaded_names", []),
+            chroma_dir=st.session_state.get("chroma_dir") or "",
         )
 
 # ── Export helpers ────────────────────────────────────────────
@@ -1489,9 +1493,51 @@ with st.sidebar:
             col_card, col_del = st.columns([5, 1])
             with col_card:
                 if st.button(f"🕐 {updated}\n{preview}…", key=f"load_sess_{sid}", use_container_width=True):
+                    # Restore messages and metadata
                     st.session_state.chat_history = sess["messages"]
                     st.session_state.loaded_history_session = sid
                     st.session_state.active_tab = "chat"
+                    st.session_state.session_id = sid
+
+                    # Restore summaries, image_texts, uploaded_names
+                    st.session_state.summaries = sess.get("summaries", {})
+                    st.session_state.image_texts = sess.get("image_texts", {})
+                    st.session_state.uploaded_names = sess.get("uploaded_names", [])
+
+                    # Reset agent state so they re-run fresh for this session
+                    st.session_state.agent_statuses = {}
+                    st.session_state.all_agents_results = {}
+                    st.session_state.active_agent = None
+                    st.session_state.agent_result = None
+
+                    # Restore the Chroma vector store from disk if available
+                    saved_chroma_dir = sess.get("chroma_dir", "")
+                    if saved_chroma_dir and os.path.exists(saved_chroma_dir):
+                        try:
+                            from langchain_community.vectorstores import Chroma
+                            from ingest import get_embeddings
+                            vectorstore = Chroma(
+                                persist_directory=saved_chroma_dir,
+                                embedding_function=get_embeddings(),
+                            )
+                            llm, retriever = build_qa_chain(
+                                vectorstore,
+                                mood=st.session_state.user_mood,
+                            )
+                            st.session_state.llm = llm
+                            st.session_state.retriever = retriever
+                            st.session_state.chroma_dir = saved_chroma_dir
+                        except Exception as e:
+                            # Store missing or corrupted — chat shows re-upload prompt
+                            st.session_state.llm = None
+                            st.session_state.retriever = None
+                            st.session_state.chroma_dir = None
+                    else:
+                        # No store on disk — chat shows re-upload prompt
+                        st.session_state.llm = None
+                        st.session_state.retriever = None
+                        st.session_state.chroma_dir = None
+
                     st.rerun()
             with col_del:
                 if st.button("🗑", key=f"del_sess_{sid}"):
@@ -1580,10 +1626,18 @@ if st.session_state.get("processing"):
             tmp_paths.append(tmp.name)
             original_names.append(file_info["name"])
     try:
+        # Wipe old chroma store if it exists
         if st.session_state.chroma_dir and os.path.exists(st.session_state.chroma_dir):
             shutil.rmtree(st.session_state.chroma_dir, ignore_errors=True)
         st.session_state.chroma_dir = None
-        # ── CHANGED: unpack 4 values now ─────────────────────────────────────
+
+        # Every new upload = brand new session, wipe previous chat + agent state
+        import uuid as _uuid
+        st.session_state.session_id = str(_uuid.uuid4())
+        st.session_state.agent_statuses = {}
+        st.session_state.all_agents_results = {}
+        st.session_state.loaded_history_session = None
+
         vectorstore, chroma_dir, summaries, image_texts = ingest_multiple_files(
             tmp_paths, original_names, session_id=st.session_state.session_id
         )
@@ -1593,7 +1647,7 @@ if st.session_state.get("processing"):
         st.session_state.chroma_dir = chroma_dir
         st.session_state.uploaded_names = original_names
         st.session_state.summaries = summaries
-        st.session_state.image_texts = image_texts   # ← save image descriptions
+        st.session_state.image_texts = image_texts
         _set_docs_ready_message()
     except Exception as e:
         st.session_state.processing_error = str(e)
@@ -2049,18 +2103,38 @@ with main_col:
                 )
 
         if st.session_state.llm is None:
-            st.markdown("""
-            <div style="text-align:center;margin:32px auto;padding:28px 32px;
-                background:white;border-radius:20px;max-width:480px;
-                box-shadow:0 4px 20px rgba(13,43,110,0.08);
-                border:1.5px dashed rgba(74,144,217,0.3);">
-                <div style="font-size:44px;margin-bottom:12px;">📤</div>
-                <p style="color:#0d2b6e;font-size:16px;font-weight:700;margin:0 0 6px;">No documents loaded</p>
-                <p style="color:#5a7abf;font-size:14px;margin:0;line-height:1.6;">
-                    Upload your medical documents from the sidebar to start chatting.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            is_history = bool(st.session_state.get("loaded_history_session"))
+            if is_history:
+                st.markdown("""
+                <div style="text-align:center;margin:20px auto 16px;padding:24px 28px;
+                    background:#fffbeb;border-radius:20px;max-width:520px;
+                    box-shadow:0 4px 20px rgba(13,43,110,0.08);
+                    border:1.5px solid #fde68a;">
+                    <div style="font-size:40px;margin-bottom:12px;">📂</div>
+                    <p style="color:#78350f;font-size:16px;font-weight:700;margin:0 0 6px;">
+                        Documents not found on this device
+                    </p>
+                    <p style="color:#92400e;font-size:14px;margin:0;line-height:1.6;">
+                        Your messages are restored but the document index wasn't found —
+                        this can happen if you're on a different device or the app was restarted.
+                        Re-upload the same documents from the sidebar to continue chatting and
+                        running agents. This will start a fresh session.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div style="text-align:center;margin:32px auto;padding:28px 32px;
+                    background:white;border-radius:20px;max-width:480px;
+                    box-shadow:0 4px 20px rgba(13,43,110,0.08);
+                    border:1.5px dashed rgba(74,144,217,0.3);">
+                    <div style="font-size:44px;margin-bottom:12px;">📤</div>
+                    <p style="color:#0d2b6e;font-size:16px;font-weight:700;margin:0 0 6px;">No documents loaded</p>
+                    <p style="color:#5a7abf;font-size:14px;margin:0;line-height:1.6;">
+                        Upload your medical documents from the sidebar to start chatting.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
 
         else:
             # Replace everything from "with st.expander("🎤 Voice input"..." 

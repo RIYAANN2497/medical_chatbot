@@ -296,10 +296,17 @@ def ingest_multiple_files(
     embedding_model = get_embeddings()
     print(f"[ingest] Embedding {len(all_chunks)} total chunks (in-memory)")
 
+    os.makedirs(CHROMA_BASE_DIR, exist_ok=True)
+    chroma_dir = os.path.join(CHROMA_BASE_DIR, session_id or str(uuid.uuid4()))
+
+    # Wipe any existing store for this session before writing fresh
+    if os.path.exists(chroma_dir):
+        shutil.rmtree(chroma_dir, ignore_errors=True)
+
     vectorstore = Chroma.from_documents(
         documents=all_chunks,
         embedding=embedding_model,
+        persist_directory=chroma_dir,
     )
-    print("[ingest] Done.")
-    # ── CHANGED: now returns 4 values instead of 3 ───────────────────────────
-    return vectorstore, None, summaries, image_texts
+    print(f"[ingest] Done. Store saved to {chroma_dir}")
+    return vectorstore, chroma_dir, summaries, image_texts
