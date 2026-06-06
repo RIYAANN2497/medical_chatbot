@@ -1490,54 +1490,61 @@ with st.sidebar:
                 continue
             updated = sess.get("updated_at", "")[:16].replace("T", " ")
             preview = sess.get("preview", "")[:55]
-            col_card, col_del = st.columns([5, 1])
-            with col_card:
-                if st.button(f"🕐 {updated}\n{preview}…", key=f"load_sess_{sid}", use_container_width=True):
-                    # Restore messages and metadata
-                    st.session_state.chat_history = sess["messages"]
-                    st.session_state.loaded_history_session = sid
-                    st.session_state.active_tab = "chat"
-                    st.session_state.session_id = sid
+            # ── session card ──────────────────────────────────
+            st.markdown(
+                f"<div style='background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.10);"
+                f"border-radius:12px;padding:10px 12px;margin:4px 0;'>"
+                f"<div style='font-size:13px;font-weight:700;color:#c8d8f0;'>🕐 {updated}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
 
-                    # Restore summaries, image_texts, uploaded_names
-                    st.session_state.summaries = sess.get("summaries", {})
-                    st.session_state.image_texts = sess.get("image_texts", {})
-                    st.session_state.uploaded_names = sess.get("uploaded_names", [])
+            col_chat, col_agents, col_del = st.columns([2, 2, 1])
 
-                    # Reset agent state so they re-run fresh for this session
-                    st.session_state.agent_statuses = {}
-                    st.session_state.all_agents_results = {}
-                    st.session_state.active_agent = None
-                    st.session_state.agent_result = None
-
-                    # Restore the Chroma vector store from disk if available
-                    saved_chroma_dir = sess.get("chroma_dir", "")
-                    if saved_chroma_dir and os.path.exists(saved_chroma_dir):
-                        try:
-                            from langchain_community.vectorstores import Chroma
-                            from ingest import get_embeddings
-                            vectorstore = Chroma(
-                                persist_directory=saved_chroma_dir,
-                                embedding_function=get_embeddings(),
-                            )
-                            llm, retriever = build_qa_chain(
-                                vectorstore,
-                                mood=st.session_state.user_mood,
-                            )
-                            st.session_state.llm = llm
-                            st.session_state.retriever = retriever
-                            st.session_state.chroma_dir = saved_chroma_dir
-                        except Exception as e:
-                            # Store missing or corrupted — chat shows re-upload prompt
-                            st.session_state.llm = None
-                            st.session_state.retriever = None
-                            st.session_state.chroma_dir = None
-                    else:
-                        # No store on disk — chat shows re-upload prompt
+            def _restore_session(sess, target_tab):
+                st.session_state.chat_history = sess["messages"]
+                st.session_state.loaded_history_session = sess["session_id"]
+                st.session_state.active_tab = target_tab
+                st.session_state.session_id = sess["session_id"]
+                st.session_state.summaries = sess.get("summaries", {})
+                st.session_state.image_texts = sess.get("image_texts", {})
+                st.session_state.uploaded_names = sess.get("uploaded_names", [])
+                st.session_state.agent_statuses = {}
+                st.session_state.all_agents_results = {}
+                st.session_state.active_agent = None
+                st.session_state.agent_result = None
+                saved_chroma_dir = sess.get("chroma_dir", "")
+                if saved_chroma_dir and os.path.exists(saved_chroma_dir):
+                    try:
+                        from langchain_community.vectorstores import Chroma
+                        from ingest import get_embeddings
+                        vectorstore = Chroma(
+                            persist_directory=saved_chroma_dir,
+                            embedding_function=get_embeddings(),
+                        )
+                        llm, retriever = build_qa_chain(
+                            vectorstore,
+                            mood=st.session_state.user_mood,
+                        )
+                        st.session_state.llm = llm
+                        st.session_state.retriever = retriever
+                        st.session_state.chroma_dir = saved_chroma_dir
+                    except Exception:
                         st.session_state.llm = None
                         st.session_state.retriever = None
                         st.session_state.chroma_dir = None
+                else:
+                    st.session_state.llm = None
+                    st.session_state.retriever = None
+                    st.session_state.chroma_dir = None
 
+            with col_chat:
+                if st.button("💬 Chat", key=f"chat_sess_{sid}", use_container_width=True):
+                    _restore_session(sess, "chat")
+                    st.rerun()
+            with col_agents:
+                if st.button("🤖 Agents", key=f"agents_sess_{sid}", use_container_width=True):
+                    _restore_session(sess, "agents")
                     st.rerun()
             with col_del:
                 if st.button("🗑", key=f"del_sess_{sid}"):
