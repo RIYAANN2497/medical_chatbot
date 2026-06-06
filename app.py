@@ -14,6 +14,8 @@ import html
 
 load_dotenv()
 
+from history_utils import save_session, load_sessions_for_patient, load_session, delete_session
+
 import re as _re
 
 def _render_message(raw: str) -> str:
@@ -880,7 +882,10 @@ defaults = {
     "last_audio_id": None,
     "voice_processed": False,
     "audio_key": 0,
+    "patient_name": "",
+    "loaded_history_session": None,    
 }
+
 
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -889,6 +894,21 @@ for k, v in defaults.items():
 if "orchestrator" not in st.session_state:
     st.session_state.orchestrator = AgentOrchestrator()
 
+def get_patient_name() -> str:
+    if st.session_state.user_whom == "me":
+        return st.session_state.user_name
+    return st.session_state.patient_name or st.session_state.user_name
+
+
+def _autosave_chat():
+    if len(st.session_state.chat_history) > 1:
+        save_session(
+            session_id=st.session_state.session_id,
+            patient_name=get_patient_name(),
+            user_name=st.session_state.user_name,
+            messages=st.session_state.chat_history,
+            user_whom=st.session_state.user_whom,
+        )
 
 # ── Export helpers ────────────────────────────────────────────
 def build_txt_export(chat_history, user_name, user_mood, user_conditions):
@@ -1091,7 +1111,7 @@ def show_onboarding():
             '<div class="ob-sub">Tell us a bit about yourself and who this report is for</div>',
             unsafe_allow_html=True,
         )
-        name = st.text_input("Your name (optional)", value=st.session_state.user_name, placeholder="e.g. Aryan")
+        name = st.text_input("Your name", value=st.session_state.user_name, placeholder="Enter your name")
         st.markdown('<p style="font-size:13px;font-weight:600;color:#6a7ab5;margin:16px 0 12px;">This report is for:</p>', unsafe_allow_html=True)
         whom_options = [("me", "🧑", "Myself"), ("parent", "👴", "My Parent"), ("child", "👶", "My Child"), ("other", "🤝", "Friend")]
         cols = st.columns(4)
@@ -1102,17 +1122,28 @@ def show_onboarding():
                     st.session_state.user_name = name
                     st.session_state.user_whom = key
                     st.rerun()
+
+        patient_name_val = st.session_state.get("patient_name", "")
+        if st.session_state.user_whom and st.session_state.user_whom != "me":
+            whom_label_map = {"parent": "your parent's", "child": "your child's", "other": "the patient's"}
+            whom_label = whom_label_map.get(st.session_state.user_whom, "the patient's")
+            st.markdown("<br>", unsafe_allow_html=True)
+            patient_name_val = st.text_input(
+                f"What is {whom_label} name?",
+                value=patient_name_val,
+                placeholder="Enter patient name",
+                key="ob_patient_name",
+            )
+
         st.markdown("<br>", unsafe_allow_html=True)
-        col_skip, col_next = st.columns([1, 1])
-        with col_skip:
-            if st.button("Skip for now", use_container_width=True, key="ob_skip1"):
-                st.session_state.user_name = name
-                st.session_state.onboarding_done = True
-                _set_welcome_message()
-                st.rerun()
-        with col_next:
-            if st.button("Continue →", use_container_width=True, type="primary", key="ob_next1"):
-                st.session_state.user_name = name
+        if st.button("Continue →", use_container_width=True, type="primary", key="ob_next1"):
+            if not name.strip():
+                st.error("Please enter your name to continue.")
+            elif st.session_state.user_whom != "me" and not patient_name_val.strip():
+                st.error("Please enter the patient's name to continue.")
+            else:
+                st.session_state.user_name = name.strip()
+                st.session_state.patient_name = patient_name_val.strip() if st.session_state.user_whom != "me" else ""
                 st.session_state.ob_step = 2
                 st.rerun()
 
@@ -1442,6 +1473,30 @@ with st.sidebar:
                     st.session_state.chat_history.append({"role": "assistant", "content": answer})
                 st.rerun()
 
+    st.markdown("---")
+    st.markdown('<p class="sidebar-section-label">📜 Past Chats</p>', unsafe_allow_html=True)
+    patient_for_lookup = get_patient_name()
+    past_sessions = load_sessions_for_patient(patient_for_lookup) if patient_for_lookup else []
+    if not past_sessions:
+        st.markdown("<p style='font-size:12px;color:#4a6aaa;margin:4px 0 8px;'>No past chats for this patient.</p>", unsafe_allow_html=True)
+    else:
+        for sess in past_sessions[:5]:
+            sid = sess["session_id"]
+            if sid == st.session_state.session_id:
+                continue
+            updated = sess.get("updated_at", "")[:16].replace("T", " ")
+            preview = sess.get("preview", "")[:55]
+            col_card, col_del = st.columns([5, 1])
+            with col_card:
+                if st.button(f"🕐 {updated}\n{preview}…", key=f"load_sess_{sid}", use_container_width=True):
+                    st.session_state.chat_history = sess["messages"]
+                    st.session_state.loaded_history_session = sid
+                    st.session_state.active_tab = "chat"
+                    st.rerun()
+            with col_del:
+                if st.button("🗑", key=f"del_sess_{sid}"):
+                    delete_session(sid)
+                    st.rerun()
     st.markdown("---")
     st.markdown('<p class="sidebar-section-label">🌐 Language</p>', unsafe_allow_html=True)
     st.markdown("""
@@ -1957,6 +2012,13 @@ with main_col:
     # ══════════════════════════════════════════════════════════
     elif active_tab == "chat":
 
+        if st.session_state.get("loaded_history_session"):
+            st.markdown(
+                "<div style='background:#fff8e7;border:1.5px solid #fde68a;border-radius:14px;"
+                "padding:10px 16px;margin-bottom:12px;font-size:13px;color:#78350f;'>"
+                "📜 Viewing a <strong>past conversation</strong>. Start typing to begin a new one."
+                "</div>", unsafe_allow_html=True)
+
         for message in st.session_state.chat_history:
             if message["role"] == "user":
                 st.markdown(
@@ -2059,6 +2121,8 @@ with main_col:
                     except Exception as e:
                         answer = f"Something went wrong while reading your documents. (Error: {e})"
                 st.session_state.chat_history.append({"role": "assistant", "content": answer})
+                st.session_state.loaded_history_session = None
+                _autosave_chat()
                 st.rerun()
 
     # ══════════════════════════════════════════════════════════
