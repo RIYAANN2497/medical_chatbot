@@ -802,12 +802,25 @@ header { visibility: hidden; }
 
 [data-testid="stAlert"] { border-radius: 14px !important; border: none !important; font-family: 'Nunito', sans-serif !important; font-size: 14px !important; }
 
-[data-testid="stAudioInput"] span,
-[data-testid="stAudioInput"] p,
-[data-testid="stAudioInput"] time,
-[data-testid="stAudioInput"] > div > div:not(:first-child) {
-    display: none !important;
+[data-testid="stAudioInput"] button {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    background: rgba(74,144,217,0.12) !important;
+    border: 1.5px solid rgba(74,144,217,0.35) !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
 }
+[data-testid="stAudioInput"] button:hover {
+    background: rgba(74,144,217,0.22) !important;
+    border-color: rgba(74,144,217,0.6) !important;
+    transform: scale(1.05) !important;
+}
+[data-testid="stAudioInput"] button svg {
+    width: 18px !important;
+    height: 18px !important;
+}
+
 [data-testid="stAudioInput"] button {
     width: 44px !important;
     height: 44px !important;
