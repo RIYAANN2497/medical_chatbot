@@ -1295,6 +1295,14 @@ with st.sidebar:
         z-index: 10 !important;
         margin-top: -118px !important;
     }
+
+    [data-testid="stFileUploaderDropzone"] button {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
     </style>
 
     <div style="
